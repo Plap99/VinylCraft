@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "CCC",
+    "CIC",
+    "CPC"
+  ],
+  "key": {
+    "C": "minecraft:coal",
+    "I": "minecraft:iron_ingot",
+    "P": "minecraft:paper"
+  },
+  "result": {
+    "id": "vinylcraft:blank_vinyl",
+    "count": 1
+  }
+}
