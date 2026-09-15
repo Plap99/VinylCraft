@@ -1,0 +1,21 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "minecraft:block/dark_oak_planks",
+    "body": "minecraft:block/dark_oak_planks"
+  },
+  "elements": [
+    {
+      "from": [1, 0, 1],
+      "to": [15, 8, 15],
+      "faces": {
+        "north": { "texture": "#body" },
+        "east":  { "texture": "#body" },
+        "south": { "texture": "#body" },
+        "west":  { "texture": "#body" },
+        "up":    { "texture": "#body" },
+        "down":  { "texture": "#body" }
+      }
+    }
+  ]
+}

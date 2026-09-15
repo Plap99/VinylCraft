@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.radig.vinylcraft.item.ModItems;
+import com.radig.vinylcraft.block.ModBlocks;
 
 public class VinylCraft implements ModInitializer {
 	public static final String MOD_ID = "vinylcraft";
@@ -22,10 +23,11 @@ public class VinylCraft implements ModInitializer {
 		// This code runs as soon as Minecraft is in a mod-load-ready state.
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
-
-		LOGGER.info("VinylCraft loaded successfully!");
-
+		
 		ModItems.registerModItems();
+		ModBlocks.registerModBlocks();
+		
+		LOGGER.info("VinylCraft loaded successfully!");
 	}
 
 	public static Identifier id(String path) {
