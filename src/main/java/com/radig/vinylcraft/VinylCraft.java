@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import com.radig.vinylcraft.item.ModItems;
 import com.radig.vinylcraft.block.ModBlocks;
 
+import com.radig.vinylcraft.block.entity.ModBlockEntities;
+
 public class VinylCraft implements ModInitializer {
 	public static final String MOD_ID = "vinylcraft";
 
@@ -26,6 +28,7 @@ public class VinylCraft implements ModInitializer {
 		
 		ModItems.registerModItems();
 		ModBlocks.registerModBlocks();
+		ModBlockEntities.registerModBlockEntities();
 		
 		LOGGER.info("VinylCraft loaded successfully!");
 	}
