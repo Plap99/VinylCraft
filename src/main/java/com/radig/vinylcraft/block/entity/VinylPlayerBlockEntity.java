@@ -11,6 +11,12 @@ import net.minecraft.world.level.storage.ValueOutput;
 
 import net.minecraft.world.level.block.Block;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+
 public class VinylPlayerBlockEntity extends BlockEntity {
 
     private final NonNullList<ItemStack> items =
@@ -61,6 +67,11 @@ public class VinylPlayerBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
+
+        // Limpiamos primero el inventario actual.
+        // Esto es necesario cuando recibimos un estado vacío desde el servidor.
+        items.clear();
+
         ContainerHelper.loadAllItems(input, items);
     }
 
@@ -76,5 +87,31 @@ public class VinylPlayerBlockEntity extends BlockEntity {
         }
 
         super.preRemoveSideEffects(pos, state);
+    }
+
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registryLookup) {
+        return saveWithoutMetadata(registryLookup);
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void setChanged() {
+        super.setChanged();
+
+        if (level != null && !level.isClientSide()) {
+            BlockState state = getBlockState();
+
+            level.sendBlockUpdated(
+                    worldPosition,
+                    state,
+                    state,
+                    Block.UPDATE_CLIENTS
+            );
+        }
     }
 }
