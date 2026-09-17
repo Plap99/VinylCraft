@@ -92,23 +92,20 @@ public class VinylPlayerBlockEntityRenderer
 
         switch (state.facing) {
             case EAST -> {
-                x = 9.5 / 16.0;
-                z = 6.5 / 16.0;
+                x = 9.5078125 / 16.0;
+                z = 6.4921875 / 16.0;
             }
-
             case SOUTH -> {
-                x = 9.5 / 16.0;
-                z = 9.5 / 16.0;
+                x = 9.5078125 / 16.0;
+                z = 9.5078125 / 16.0;
             }
-
             case WEST -> {
-                x = 6.5 / 16.0;
-                z = 9.5 / 16.0;
+                x = 6.4921875 / 16.0;
+                z = 9.5078125 / 16.0;
             }
-
-            default -> {
-                x = 6.5 / 16.0;
-                z = 6.5 / 16.0;
+            default -> { // NORTH
+                x = 6.4921875 / 16.0;
+                z = 6.4921875 / 16.0;
             }
         }
 
