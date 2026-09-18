@@ -12,5 +12,9 @@ public class VinylPlayerRenderState extends BlockEntityRenderState {
 
     public boolean hasVinyl;
 
+    public boolean playing;
+    
     public Direction facing = Direction.NORTH;
+
+    public float vinylRotation;
 }

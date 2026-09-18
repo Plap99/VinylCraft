@@ -26,6 +26,10 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import com.radig.vinylcraft.block.entity.ModBlockEntities;
+
 public class VinylPlayerBlock extends HorizontalDirectionalBlock implements EntityBlock {
 
     private static final VoxelShape SHAPE =
@@ -52,6 +56,23 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new VinylPlayerBlockEntity(pos, state);
+    }
+
+    @Nullable
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
+            Level level,
+            BlockState state,
+            BlockEntityType<T> blockEntityType) {
+
+        if (blockEntityType != ModBlockEntities.VINYL_PLAYER) {
+            return null;
+        }
+
+        return (BlockEntityTicker<T>)
+                (BlockEntityTicker<VinylPlayerBlockEntity>)
+                        VinylPlayerBlockEntity::tick;
     }
 
     @Override
@@ -86,15 +107,28 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
             return InteractionResult.PASS;
         }
 
-        // Si ya hay un vinilo, lo retiramos.
+        // Si ya hay un vinilo...
         if (playerEntity.hasVinyl()) {
 
-            if (!level.isClientSide()) {
-                ItemStack vinyl = playerEntity.removeVinyl();
+            // Shift + clic derecho = retirar vinilo.
+            if (player.isShiftKeyDown()) {
 
-                if (!player.getInventory().add(vinyl)) {
-                    player.drop(vinyl, false);
+                if (!level.isClientSide()) {
+                    ItemStack vinyl = playerEntity.removeVinyl();
+
+                    if (!player.getInventory().add(vinyl)) {
+                        player.drop(vinyl, false);
+                    }
                 }
+
+                return InteractionResult.SUCCESS;
+            }
+
+            // Clic derecho normal = Play / Pause.
+            if (!level.isClientSide()) {
+                playerEntity.setPlaying(
+                        !playerEntity.isPlaying()
+                );
             }
 
             return InteractionResult.SUCCESS;
@@ -107,6 +141,7 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
 
         // Insertamos un solo vinilo.
         if (!level.isClientSide()) {
+
             if (playerEntity.insertVinyl(stack)) {
 
                 if (!player.getAbilities().instabuild) {
@@ -128,19 +163,45 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
 
         if (!(level.getBlockEntity(pos)
                 instanceof VinylPlayerBlockEntity playerEntity)) {
-            return super.useWithoutItem(state, level, pos, player, hit);
+
+            return super.useWithoutItem(
+                    state,
+                    level,
+                    pos,
+                    player,
+                    hit
+            );
         }
 
         if (!playerEntity.hasVinyl()) {
-            return super.useWithoutItem(state, level, pos, player, hit);
+            return super.useWithoutItem(
+                    state,
+                    level,
+                    pos,
+                    player,
+                    hit
+            );
         }
 
-        if (!level.isClientSide()) {
-            ItemStack vinyl = playerEntity.removeVinyl();
+        // Shift + clic derecho = retirar vinilo.
+        if (player.isShiftKeyDown()) {
 
-            if (!player.getInventory().add(vinyl)) {
-                player.drop(vinyl, false);
+            if (!level.isClientSide()) {
+                ItemStack vinyl = playerEntity.removeVinyl();
+
+                if (!player.getInventory().add(vinyl)) {
+                    player.drop(vinyl, false);
+                }
             }
+
+            return InteractionResult.SUCCESS;
+        }
+
+        // Clic derecho normal = Play / Pause.
+        if (!level.isClientSide()) {
+            playerEntity.setPlaying(
+                    !playerEntity.isPlaying()
+            );
         }
 
         return InteractionResult.SUCCESS;

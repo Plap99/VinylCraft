@@ -51,6 +51,12 @@ public class VinylPlayerBlockEntityRenderer
         );
 
         state.hasVinyl = blockEntity.hasVinyl();
+        state.playing = blockEntity.isPlaying();
+
+        state.vinylRotation =
+        (blockEntity.getPlaybackTicks()
+                + (state.playing ? tickProgress : 0.0F))
+                * 10.0F;
 
         // Guardamos también hacia dónde está orientado
         // este reproductor en particular.
@@ -118,6 +124,11 @@ public class VinylPlayerBlockEntityRenderer
         // El vinilo siempre queda horizontal.
         matrices.mulPose(
                 com.mojang.math.Axis.XP.rotationDegrees(90.0F)
+        );
+
+        // Gira el vinilo sobre su propio centro.
+        matrices.mulPose(
+                com.mojang.math.Axis.ZP.rotationDegrees(state.vinylRotation)
         );
 
         matrices.scale(
