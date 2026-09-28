@@ -52,6 +52,15 @@ public class VinylPlayerBlockEntityRenderer
 
         state.hasVinyl = blockEntity.hasVinyl();
         state.playing = blockEntity.isPlaying();
+        state.paused = blockEntity.isPaused();
+
+        if (state.playing) {
+            state.tonearmLift = 0.0F;
+        } else if (state.paused) {
+            state.tonearmLift = 1.0F;
+        } else {
+            state.tonearmLift = 1.0F;
+        }
 
         state.vinylRotation =
         (blockEntity.getPlaybackTicks()

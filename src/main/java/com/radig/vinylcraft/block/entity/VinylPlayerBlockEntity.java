@@ -24,6 +24,7 @@ public class VinylPlayerBlockEntity extends BlockEntity {
             NonNullList.withSize(1, ItemStack.EMPTY);
 
     private boolean playing = false;
+    private boolean paused = false;
     private long playbackTicks = 0;
 
     public VinylPlayerBlockEntity(BlockPos pos, BlockState state) {
@@ -42,18 +43,39 @@ public class VinylPlayerBlockEntity extends BlockEntity {
         return playing;
     }
 
-    public void setPlaying(boolean playing) {
+    public boolean isPaused() {
+        return paused;
+    }
 
+    public boolean isStopped() {
+        return !playing && !paused;
+    }
+
+    public void setPlaying(boolean playing) {
         // No permitimos reproducir si no hay vinilo.
         if (playing && !hasVinyl()) {
             return;
         }
 
-        if (this.playing == playing) {
-            return;
+        if (playing) {
+            this.playing = true;
+            this.paused = false;
+        } else {
+            // Si estaba reproduciendo, pasar a false significa PAUSA.
+            if (this.playing) {
+                this.playing = false;
+                this.paused = true;
+            }
         }
 
-        this.playing = playing;
+        setChanged();
+    }
+
+    public void stopPlayback() {
+        playing = false;
+        paused = false;
+        playbackTicks = 0;
+
         setChanged();
     }
 
@@ -79,7 +101,7 @@ public class VinylPlayerBlockEntity extends BlockEntity {
 
         // Si quitamos el disco, el reproductor se detiene.
         playing = false;
-
+        paused = false;
         playbackTicks = 0;
 
         setChanged();
@@ -111,6 +133,7 @@ public class VinylPlayerBlockEntity extends BlockEntity {
         ContainerHelper.saveAllItems(output, items);
 
         output.putBoolean("Playing", playing);
+        output.putBoolean("Paused", paused);
         output.putLong("PlaybackTicks", playbackTicks);
 
         super.saveAdditional(output);
@@ -127,6 +150,7 @@ public class VinylPlayerBlockEntity extends BlockEntity {
         ContainerHelper.loadAllItems(input, items);
 
         playing = input.getBooleanOr("Playing", false);
+        paused = input.getBooleanOr("Paused", false);
         playbackTicks = input.getLongOr("PlaybackTicks", 0L);
     }
 

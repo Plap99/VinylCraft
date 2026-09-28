@@ -30,6 +30,8 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import com.radig.vinylcraft.block.entity.ModBlockEntities;
 
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+
 public class VinylPlayerBlock extends HorizontalDirectionalBlock implements EntityBlock {
 
     private static final VoxelShape SHAPE =
@@ -42,8 +44,9 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
         super(properties);
 
         registerDefaultState(
-                stateDefinition.any()
-                        .setValue(FACING, Direction.NORTH)
+            stateDefinition.any()
+                    .setValue(FACING, Direction.NORTH)
+                    .setValue(OPEN, true)
         );
     }
 
@@ -51,6 +54,9 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
     protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
         return CODEC;
     }
+
+    public static final BooleanProperty OPEN =
+        BooleanProperty.create("open");
 
     @Nullable
     @Override
@@ -88,7 +94,7 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
     protected void createBlockStateDefinition(
             StateDefinition.Builder<Block, BlockState> builder) {
 
-        builder.add(FACING);
+        builder.add(FACING, OPEN);
     }
 
    @Override
@@ -105,6 +111,23 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
                 instanceof VinylPlayerBlockEntity playerEntity)) {
 
             return InteractionResult.PASS;
+        }
+
+        // TEMPORAL: Shift + clic derecho alterna la tapa.
+        if (player.isShiftKeyDown()) {
+
+            if (!level.isClientSide()) {
+                level.setBlock(
+                        pos,
+                        state.setValue(
+                                OPEN,
+                                !state.getValue(OPEN)
+                        ),
+                        Block.UPDATE_ALL
+                );
+            }
+
+            return InteractionResult.SUCCESS;
         }
 
         // Si ya hay un vinilo...
@@ -171,6 +194,23 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
                     player,
                     hit
             );
+        }
+
+        // TEMPORAL: Shift + clic derecho alterna la tapa.
+        if (player.isShiftKeyDown()) {
+
+            if (!level.isClientSide()) {
+                level.setBlock(
+                        pos,
+                        state.setValue(
+                                OPEN,
+                                !state.getValue(OPEN)
+                        ),
+                        Block.UPDATE_ALL
+                );
+            }
+
+            return InteractionResult.SUCCESS;
         }
 
         if (!playerEntity.hasVinyl()) {

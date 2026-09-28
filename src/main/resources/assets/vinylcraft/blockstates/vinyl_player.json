@@ -1,18 +1,36 @@
 {
   "variants": {
-    "facing=north": {
+    "facing=north,open=true": {
       "model": "vinylcraft:block/vinyl_player"
     },
-    "facing=east": {
+    "facing=north,open=false": {
+      "model": "vinylcraft:block/vinyl_player_closed"
+    },
+
+    "facing=east,open=true": {
       "model": "vinylcraft:block/vinyl_player",
       "y": 90
     },
-    "facing=south": {
+    "facing=east,open=false": {
+      "model": "vinylcraft:block/vinyl_player_closed",
+      "y": 90
+    },
+
+    "facing=south,open=true": {
       "model": "vinylcraft:block/vinyl_player",
       "y": 180
     },
-    "facing=west": {
+    "facing=south,open=false": {
+      "model": "vinylcraft:block/vinyl_player_closed",
+      "y": 180
+    },
+
+    "facing=west,open=true": {
       "model": "vinylcraft:block/vinyl_player",
+      "y": 270
+    },
+    "facing=west,open=false": {
+      "model": "vinylcraft:block/vinyl_player_closed",
       "y": 270
     }
   }
