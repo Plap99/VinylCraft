@@ -1,12 +1,12 @@
 package com.radig.vinylcraft.block;
 
 import com.mojang.serialization.MapCodec;
+import com.radig.vinylcraft.block.entity.ModBlockEntities;
 import com.radig.vinylcraft.block.entity.VinylPlayerBlockEntity;
 import com.radig.vinylcraft.item.ModItems;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -15,64 +15,94 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import com.radig.vinylcraft.block.entity.ModBlockEntities;
-
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
-
-public class VinylPlayerBlock extends HorizontalDirectionalBlock implements EntityBlock {
+public class VinylPlayerBlock
+        extends HorizontalDirectionalBlock
+        implements EntityBlock {
 
     private static final VoxelShape SHAPE =
-            Block.box(1, 0, 1, 15, 8, 15);
+            Block.box(
+                    1,
+                    0,
+                    1,
+                    15,
+                    8,
+                    15
+            );
+
+    public static final BooleanProperty OPEN =
+            BooleanProperty.create("open");
 
     public static final MapCodec<VinylPlayerBlock> CODEC =
             simpleCodec(VinylPlayerBlock::new);
 
+
     public VinylPlayerBlock(Properties properties) {
+
         super(properties);
 
         registerDefaultState(
-            stateDefinition.any()
-                    .setValue(FACING, Direction.NORTH)
-                    .setValue(OPEN, true)
+                stateDefinition.any()
+                        .setValue(
+                                FACING,
+                                Direction.NORTH
+                        )
+                        .setValue(
+                                OPEN,
+                                true
+                        )
         );
     }
 
+
     @Override
-    protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
+    protected MapCodec<? extends HorizontalDirectionalBlock>
+            codec() {
+
         return CODEC;
     }
 
-    public static final BooleanProperty OPEN =
-        BooleanProperty.create("open");
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new VinylPlayerBlockEntity(pos, state);
+    public BlockEntity newBlockEntity(
+            BlockPos pos,
+            BlockState state) {
+
+        return new VinylPlayerBlockEntity(
+                pos,
+                state
+        );
     }
+
 
     @Nullable
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
-            Level level,
-            BlockState state,
-            BlockEntityType<T> blockEntityType) {
+    public <T extends BlockEntity>
+            BlockEntityTicker<T> getTicker(
+                    Level level,
+                    BlockState state,
+                    BlockEntityType<T> blockEntityType) {
 
-        if (blockEntityType != ModBlockEntities.VINYL_PLAYER) {
+        if (
+                blockEntityType
+                != ModBlockEntities.VINYL_PLAYER
+        ) {
+
             return null;
         }
 
@@ -81,23 +111,40 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
                         VinylPlayerBlockEntity::tick;
     }
 
+
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
+    public BlockState getStateForPlacement(
+            BlockPlaceContext context) {
+
         return defaultBlockState()
                 .setValue(
                         FACING,
-                        context.getHorizontalDirection().getOpposite()
+                        context
+                                .getHorizontalDirection()
+                                .getOpposite()
                 );
     }
 
+
     @Override
     protected void createBlockStateDefinition(
-            StateDefinition.Builder<Block, BlockState> builder) {
+            StateDefinition.Builder<
+                    Block,
+                    BlockState> builder) {
 
-        builder.add(FACING, OPEN);
+        builder.add(
+                FACING,
+                OPEN
+        );
     }
 
-   @Override
+
+    /*
+     * =====================================================
+     * INTERACCIÓN CON OBJETO EN LA MANO
+     * =====================================================
+     */
+    @Override
     protected InteractionResult useItemOn(
             ItemStack stack,
             BlockState state,
@@ -107,16 +154,62 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
             InteractionHand hand,
             BlockHitResult hit) {
 
-        if (!(level.getBlockEntity(pos)
-                instanceof VinylPlayerBlockEntity playerEntity)) {
+        if (!(
+                level.getBlockEntity(pos)
+                instanceof VinylPlayerBlockEntity playerEntity
+        )) {
 
             return InteractionResult.PASS;
         }
 
-        // TEMPORAL: Shift + clic derecho alterna la tapa.
+
+        /*
+         * =================================================
+         * SHIFT + VINILO COLOCADO
+         *
+         * Retirar vinilo.
+         *
+         * Esta comprobación DEBE ir antes que la tapa.
+         * =================================================
+         */
+        if (
+                player.isShiftKeyDown()
+                && playerEntity.hasVinyl()
+        ) {
+
+            if (!level.isClientSide()) {
+
+                ItemStack vinyl =
+                        playerEntity.removeVinyl();
+
+                if (
+                        !player
+                                .getInventory()
+                                .add(vinyl)
+                ) {
+
+                    player.drop(
+                            vinyl,
+                            false
+                    );
+                }
+            }
+
+            return InteractionResult.SUCCESS;
+        }
+
+
+        /*
+         * =================================================
+         * SHIFT + REPRODUCTOR VACÍO
+         *
+         * Abrir / cerrar tapa.
+         * =================================================
+         */
         if (player.isShiftKeyDown()) {
 
             if (!level.isClientSide()) {
+
                 level.setBlock(
                         pos,
                         state.setValue(
@@ -130,25 +223,18 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
             return InteractionResult.SUCCESS;
         }
 
-        // Si ya hay un vinilo...
+
+        /*
+         * =================================================
+         * YA HAY VINILO
+         *
+         * Clic derecho normal = PLAY / PAUSE.
+         * =================================================
+         */
         if (playerEntity.hasVinyl()) {
 
-            // Shift + clic derecho = retirar vinilo.
-            if (player.isShiftKeyDown()) {
-
-                if (!level.isClientSide()) {
-                    ItemStack vinyl = playerEntity.removeVinyl();
-
-                    if (!player.getInventory().add(vinyl)) {
-                        player.drop(vinyl, false);
-                    }
-                }
-
-                return InteractionResult.SUCCESS;
-            }
-
-            // Clic derecho normal = Play / Pause.
             if (!level.isClientSide()) {
+
                 playerEntity.setPlaying(
                         !playerEntity.isPlaying()
                 );
@@ -157,17 +243,35 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
             return InteractionResult.SUCCESS;
         }
 
-        // Si está vacío, solamente acepta Blank Vinyl.
+
+        /*
+         * =================================================
+         * REPRODUCTOR VACÍO
+         *
+         * Solamente acepta Blank Vinyl.
+         * =================================================
+         */
         if (!stack.is(ModItems.BLANK_VINYL)) {
+
             return InteractionResult.PASS;
         }
 
-        // Insertamos un solo vinilo.
+
+        /*
+         * Insertamos solamente una unidad.
+         */
         if (!level.isClientSide()) {
 
-            if (playerEntity.insertVinyl(stack)) {
+            if (
+                    playerEntity.insertVinyl(stack)
+            ) {
 
-                if (!player.getAbilities().instabuild) {
+                if (
+                        !player
+                                .getAbilities()
+                                .instabuild
+                ) {
+
                     stack.shrink(1);
                 }
             }
@@ -176,6 +280,12 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
         return InteractionResult.SUCCESS;
     }
 
+
+    /*
+     * =====================================================
+     * INTERACCIÓN CON MANO VACÍA
+     * =====================================================
+     */
     @Override
     protected InteractionResult useWithoutItem(
             BlockState state,
@@ -184,8 +294,10 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
             Player player,
             BlockHitResult hit) {
 
-        if (!(level.getBlockEntity(pos)
-                instanceof VinylPlayerBlockEntity playerEntity)) {
+        if (!(
+                level.getBlockEntity(pos)
+                instanceof VinylPlayerBlockEntity playerEntity
+        )) {
 
             return super.useWithoutItem(
                     state,
@@ -196,10 +308,52 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
             );
         }
 
-        // TEMPORAL: Shift + clic derecho alterna la tapa.
+
+        /*
+         * =================================================
+         * SHIFT + VINILO COLOCADO
+         *
+         * Retirar vinilo.
+         * =================================================
+         */
+        if (
+                player.isShiftKeyDown()
+                && playerEntity.hasVinyl()
+        ) {
+
+            if (!level.isClientSide()) {
+
+                ItemStack vinyl =
+                        playerEntity.removeVinyl();
+
+                if (
+                        !player
+                                .getInventory()
+                                .add(vinyl)
+                ) {
+
+                    player.drop(
+                            vinyl,
+                            false
+                    );
+                }
+            }
+
+            return InteractionResult.SUCCESS;
+        }
+
+
+        /*
+         * =================================================
+         * SHIFT + REPRODUCTOR VACÍO
+         *
+         * Abrir / cerrar tapa.
+         * =================================================
+         */
         if (player.isShiftKeyDown()) {
 
             if (!level.isClientSide()) {
+
                 level.setBlock(
                         pos,
                         state.setValue(
@@ -213,7 +367,13 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
             return InteractionResult.SUCCESS;
         }
 
+
+        /*
+         * Sin vinilo y sin Shift:
+         * no hacemos nada.
+         */
         if (!playerEntity.hasVinyl()) {
+
             return super.useWithoutItem(
                     state,
                     level,
@@ -223,22 +383,16 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
             );
         }
 
-        // Shift + clic derecho = retirar vinilo.
-        if (player.isShiftKeyDown()) {
 
-            if (!level.isClientSide()) {
-                ItemStack vinyl = playerEntity.removeVinyl();
-
-                if (!player.getInventory().add(vinyl)) {
-                    player.drop(vinyl, false);
-                }
-            }
-
-            return InteractionResult.SUCCESS;
-        }
-
-        // Clic derecho normal = Play / Pause.
+        /*
+         * =================================================
+         * VINILO COLOCADO
+         *
+         * Clic derecho normal = PLAY / PAUSE.
+         * =================================================
+         */
         if (!level.isClientSide()) {
+
             playerEntity.setPlaying(
                     !playerEntity.isPlaying()
             );
@@ -246,6 +400,7 @@ public class VinylPlayerBlock extends HorizontalDirectionalBlock implements Enti
 
         return InteractionResult.SUCCESS;
     }
+
 
     @Override
     protected VoxelShape getShape(
