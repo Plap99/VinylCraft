@@ -1,0 +1,3 @@
+-XDrawDiagnostics
+-proc:none
+src/main/java/com/radig/vinylcraft/block/VinylPlayerBlock.java

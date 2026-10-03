@@ -13,7 +13,6 @@ public class ModBlocks {
     public static final Block VINYL_PLAYER = new VinylPlayerBlock(
             BlockBehaviour.Properties.of()
                     .strength(1.2F, 3.0F)
-                    .requiresCorrectToolForDrops()
                     .noOcclusion()
                     .setId(ModBlockItemIds.VINYL_PLAYER.block()));
 

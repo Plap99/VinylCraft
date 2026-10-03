@@ -1,0 +1,11 @@
+{
+  "get_your_shine_on": {
+    "sounds": [
+      {
+        "name": "vinylcraft:music/get_your_shine_on",
+        "stream": true,
+        "attenuation_distance": 16
+      }
+    ]
+  }
+}

@@ -18,6 +18,8 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 
 import net.minecraft.world.level.Level;
 
+import com.radig.vinylcraft.sound.VinylPlayerAudioBridge;
+
 public class VinylPlayerBlockEntity extends BlockEntity {
 
     private final NonNullList<ItemStack> items =
@@ -356,7 +358,11 @@ private static final long TONEARM_VISUAL_TRACK_TICKS =
          */
         if (level.isClientSide()) {
 
-            blockEntity.tickTonearmAnimation();
+        blockEntity.tickTonearmAnimation();
+
+        VinylPlayerAudioBridge.tickClient(
+                blockEntity
+        );
         }
     }
 
