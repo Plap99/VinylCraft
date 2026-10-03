@@ -38,11 +38,11 @@ public class ModItems {
 
 
     public static final Item BLANK_VINYL =
-            register(
-                    ModItemIds.BLANK_VINYL,
-                    Item::new,
-                    new Item.Properties()
-            );
+        register(
+                ModItemIds.BLANK_VINYL,
+                VinylItem::new,
+                new Item.Properties()
+        );
 
 
     public static void registerModItems() {

@@ -15,6 +15,15 @@ import net.minecraft.client.sounds.ChannelAccess;
 import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.client.sounds.SoundManager;
 
+import com.radig.vinylcraft.music.AlbumData;
+import com.radig.vinylcraft.music.ModAlbums;
+import com.radig.vinylcraft.music.TrackData;
+import com.radig.vinylcraft.music.TrackSoundResolver;
+
+import net.minecraft.sounds.SoundEvent;
+
+import com.radig.vinylcraft.item.VinylData;
+
 public final class VinylPlayerSoundManager {
 
     /*
@@ -143,10 +152,44 @@ public final class VinylPlayerSoundManager {
                 || currentSound.isStopped()
         ) {
 
-            VinylPlayerSoundInstance newSound =
-                    new VinylPlayerSoundInstance(
-                            playerEntity
-                    );
+            String albumId =
+                VinylData.getAlbumId(
+                        playerEntity.getVinyl()
+                );
+
+        if (albumId == null) {
+        return;
+        }
+
+        AlbumData album =
+                ModAlbums.get(albumId);
+
+        if (
+                album == null
+                || album.isEmpty()
+        ) {
+        return;
+        }
+
+        TrackData track =
+                album.getTrack(0);
+
+        if (track == null) {
+        return;
+        }
+
+        SoundEvent soundEvent =
+                TrackSoundResolver.resolve(track);
+
+        if (soundEvent == null) {
+        return;
+        }
+
+        VinylPlayerSoundInstance newSound =
+                new VinylPlayerSoundInstance(
+                        playerEntity,
+                        soundEvent
+                );
 
             newSound.setPausedVolume(false);
 

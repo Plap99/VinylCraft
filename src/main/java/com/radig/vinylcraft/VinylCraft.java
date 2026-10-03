@@ -10,6 +10,7 @@ import com.radig.vinylcraft.sound.ModSounds;
 
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
+import com.radig.vinylcraft.component.ModDataComponents;
 
 public class VinylCraft implements ModInitializer {
 
@@ -20,6 +21,9 @@ public class VinylCraft implements ModInitializer {
 
     @Override
     public void onInitialize() {
+
+        ModDataComponents.registerModDataComponents();
+        
         ModItems.registerModItems();
         ModBlocks.registerModBlocks();
         ModBlockEntities.registerModBlockEntities();

@@ -1,11 +1,12 @@
 package com.radig.vinylcraft.client.sound;
 
 import com.radig.vinylcraft.block.entity.VinylPlayerBlockEntity;
-import com.radig.vinylcraft.sound.ModSounds;
 
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.sounds.SoundSource;
+
+import net.minecraft.sounds.SoundEvent;
 
 public class VinylPlayerSoundInstance
         extends AbstractTickableSoundInstance {
@@ -15,10 +16,11 @@ public class VinylPlayerSoundInstance
     private final VinylPlayerBlockEntity playerEntity;
 
     public VinylPlayerSoundInstance(
-            VinylPlayerBlockEntity playerEntity) {
+            VinylPlayerBlockEntity playerEntity,
+            SoundEvent soundEvent) {
 
         super(
-                ModSounds.GET_YOUR_SHINE_ON,
+                soundEvent,
                 SoundSource.RECORDS,
                 SoundInstance.createUnseededRandom()
         );
