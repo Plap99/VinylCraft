@@ -1,0 +1,7 @@
+{
+  "parent": "vinylcraft:block/vinyl_player",
+  "textures": {
+    "particle": "minecraft:block/pale_oak_planks",
+    "body": "minecraft:block/pale_oak_planks"
+  }
+}

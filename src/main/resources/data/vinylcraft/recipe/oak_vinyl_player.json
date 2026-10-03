@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "vinylcraft:vinyl_players",
+  "category": "misc",
+  "pattern": [
+    "GGG",
+    "WRW",
+    "WIW"
+  ],
+  "key": {
+    "G": "minecraft:glass_pane",
+    "W": "minecraft:oak_planks",
+    "R": "minecraft:redstone",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "vinylcraft:oak_vinyl_player",
+    "count": 1
+  }
+}

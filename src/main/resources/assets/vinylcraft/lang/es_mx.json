@@ -1,4 +1,15 @@
 {
   "item.vinylcraft.blank_vinyl": "Vinilo en blanco",
-  "item.vinylcraft.vinyl_player": "Reproductor de Vinilos"
+  "item.vinylcraft.oak_vinyl_player": "Tocadiscos de Roble",
+  "item.vinylcraft.spruce_vinyl_player": "Tocadiscos de Abeto",
+  "item.vinylcraft.birch_vinyl_player": "Tocadiscos de Abedul",
+  "item.vinylcraft.jungle_vinyl_player": "Tocadiscos de Jungla",
+  "item.vinylcraft.acacia_vinyl_player": "Tocadiscos de Acacia",
+  "item.vinylcraft.dark_oak_vinyl_player": "Tocadiscos de Roble oscuro",
+  "item.vinylcraft.mangrove_vinyl_player": "Tocadiscos de Mangle",
+  "item.vinylcraft.cherry_vinyl_player": "Tocadiscos de Cerezo",
+  "item.vinylcraft.pale_oak_vinyl_player": "Tocadiscos de Roble pálido",
+  "item.vinylcraft.bamboo_vinyl_player": "Tocadiscos de Bambú",
+  "item.vinylcraft.crimson_vinyl_player": "Tocadiscos de Carmesí",
+  "item.vinylcraft.warped_vinyl_player": "Tocadiscos de Distorsionado"
 }

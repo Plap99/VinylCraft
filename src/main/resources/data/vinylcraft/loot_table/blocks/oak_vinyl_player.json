@@ -6,7 +6,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "vinylcraft:vinyl_player"
+          "name": "vinylcraft:oak_vinyl_player"
         }
       ],
       "conditions": [

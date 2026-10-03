@@ -1,4 +1,15 @@
 {
   "item.vinylcraft.blank_vinyl": "Blank Vinyl",
-  "item.vinylcraft.vinyl_player": "Vinyl Player"
+  "item.vinylcraft.oak_vinyl_player": "Oak Vinyl Player",
+  "item.vinylcraft.spruce_vinyl_player": "Spruce Vinyl Player",
+  "item.vinylcraft.birch_vinyl_player": "Birch Vinyl Player",
+  "item.vinylcraft.jungle_vinyl_player": "Jungle Vinyl Player",
+  "item.vinylcraft.acacia_vinyl_player": "Acacia Vinyl Player",
+  "item.vinylcraft.dark_oak_vinyl_player": "Dark Oak Vinyl Player",
+  "item.vinylcraft.mangrove_vinyl_player": "Mangrove Vinyl Player",
+  "item.vinylcraft.cherry_vinyl_player": "Cherry Vinyl Player",
+  "item.vinylcraft.pale_oak_vinyl_player": "Pale Oak Vinyl Player",
+  "item.vinylcraft.bamboo_vinyl_player": "Bamboo Vinyl Player",
+  "item.vinylcraft.crimson_vinyl_player": "Crimson Vinyl Player",
+  "item.vinylcraft.warped_vinyl_player": "Warped Vinyl Player"
 }
