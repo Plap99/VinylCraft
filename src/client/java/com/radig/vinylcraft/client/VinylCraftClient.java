@@ -1,5 +1,6 @@
 package com.radig.vinylcraft.client;
 
+import com.radig.vinylcraft.VinylCraft;
 import com.radig.vinylcraft.block.entity.ModBlockEntities;
 import com.radig.vinylcraft.client.render.VinylPlayerBlockEntityRenderer;
 import com.radig.vinylcraft.client.render.VinylPlayerTonearmModel;
@@ -30,14 +31,24 @@ import com.radig.vinylcraft.client.library.MusicLibraryScanner;
 import com.radig.vinylcraft.client.library.AudioMetadata;
 import com.radig.vinylcraft.client.library.AudioMetadataReader;
 
+import com.radig.vinylcraft.client.library.MusicLibraryConfig;
+
+import org.lwjgl.glfw.GLFW;
+
+import com.mojang.blaze3d.platform.InputConstants;
+import com.radig.vinylcraft.client.library.MusicLibraryScreen;
+
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.minecraft.client.KeyMapping;
+
 public class VinylCraftClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
 
         registerVinylTooltips();
-        testMusicLibraryScanner();
-        testAudioMetadata();
+        MusicLibraryConfig.load();
 
         ModelLayerRegistry.registerModelLayer(
                 VinylPlayerBlockEntityRenderer.TONEARM_LAYER,
@@ -60,6 +71,22 @@ public class VinylCraftClient implements ClientModInitializer {
          */
         VinylPlayerAudioBridge.setClientTicker(
                 VinylPlayerSoundManager::tickPlayer
+        );
+
+        ClientTickEvents.END_CLIENT_TICK.register(
+                client -> {
+
+                while (OPEN_LIBRARY_KEY.consumeClick()) {
+
+                        if (client.gui.screen() != null) {
+                        continue;
+                        }
+
+                        client.gui.setScreen(
+                                new MusicLibraryScreen()
+                        );
+                }
+                }
         );
     }
 
@@ -322,5 +349,20 @@ public class VinylCraftClient implements ClientModInitializer {
                 );
 
                 System.out.println();
-                }
-}
+        }
+
+        private static final KeyMapping.Category VINYLCRAFT_CATEGORY =
+                KeyMapping.Category.register(
+                        VinylCraft.id("vinylcraft")
+                );
+
+        private static final KeyMapping OPEN_LIBRARY_KEY =
+                KeyMappingHelper.registerKeyMapping(
+                        new KeyMapping(
+                                "key.vinylcraft.open_library",
+                                InputConstants.Type.KEYSYM,
+                                GLFW.GLFW_KEY_F7,
+                                VINYLCRAFT_CATEGORY
+                        )
+                );
+        }

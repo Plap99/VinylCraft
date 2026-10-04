@@ -36,6 +36,22 @@ public final class MusicLibraryManager {
         refresh();
     }
 
+    public static void addRootFolderWithoutRefresh(
+            Path path) {
+
+        if (path == null) {
+            return;
+        }
+
+        Path normalized =
+                path.toAbsolutePath().normalize();
+
+        if (ROOT_FOLDERS.contains(normalized)) {
+            return;
+        }
+
+        ROOT_FOLDERS.add(normalized);
+    }
 
     public static void removeRootFolder(Path path) {
 
