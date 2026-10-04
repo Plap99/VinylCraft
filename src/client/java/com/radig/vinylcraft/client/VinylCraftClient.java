@@ -12,10 +12,32 @@ import net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry;
 
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 
+import com.radig.vinylcraft.item.ModItems;
+import com.radig.vinylcraft.item.VinylData;
+import com.radig.vinylcraft.music.AlbumData;
+import com.radig.vinylcraft.music.ModAlbums;
+
+import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+
+import java.nio.file.Path;
+
+import com.radig.vinylcraft.client.library.MusicLibraryEntry;
+import com.radig.vinylcraft.client.library.MusicLibraryScanner;
+
+import com.radig.vinylcraft.client.library.AudioMetadata;
+import com.radig.vinylcraft.client.library.AudioMetadataReader;
+
 public class VinylCraftClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+
+        registerVinylTooltips();
+        testMusicLibraryScanner();
+        testAudioMetadata();
 
         ModelLayerRegistry.registerModelLayer(
                 VinylPlayerBlockEntityRenderer.TONEARM_LAYER,
@@ -40,4 +62,265 @@ public class VinylCraftClient implements ClientModInitializer {
                 VinylPlayerSoundManager::tickPlayer
         );
     }
+
+    private static void registerVinylTooltips() {
+        ItemTooltipCallback.EVENT.register(
+                (stack, tooltipContext, tooltipFlag, lines) -> {
+
+                        if (!stack.is(ModItems.BLANK_VINYL)) {
+                        return;
+                        }
+
+                        String albumId =
+                                VinylData.getAlbumId(stack);
+
+                        // Vinilo virgen
+                        if (albumId == null) {
+
+                        lines.add(
+                                Component.literal("Sin grabar")
+                                        .withStyle(ChatFormatting.GRAY)
+                        );
+
+                        lines.add(
+                                Component.literal(
+                                        "Usa este vinilo para crear un álbum"
+                                ).withStyle(ChatFormatting.DARK_GRAY)
+                        );
+
+                        return;
+                        }
+
+                        AlbumData album =
+                                ModAlbums.get(albumId);
+
+                        if (album == null) {
+                        return;
+                        }
+
+                        // Artista
+                        if (
+                                album.artist() != null
+                                && !album.artist().isBlank()
+                        ) {
+                        lines.add(
+                                Component.literal(album.artist())
+                                        .withStyle(ChatFormatting.GRAY)
+                        );
+                        }
+
+                        // Número de pistas
+                        int tracks = album.trackCount();
+
+                        lines.add(
+                                Component.literal(
+                                        tracks
+                                                + (tracks == 1
+                                                ? " pista"
+                                                : " pistas")
+                                ).withStyle(ChatFormatting.DARK_GRAY)
+                        );
+
+                        // Duración total
+                        long totalSeconds =
+                                album.totalDurationMillis() / 1000L;
+
+                        long minutes =
+                                totalSeconds / 60L;
+
+                        long seconds =
+                                totalSeconds % 60L;
+
+                        lines.add(
+                                Component.literal(
+                                        String.format(
+                                                "%02d:%02d",
+                                                minutes,
+                                                seconds
+                                        )
+                                ).withStyle(ChatFormatting.DARK_GRAY)
+                        );
+                }
+        );
+        }
+
+        private static void testMusicLibraryScanner() {
+
+                Path musicFolder =
+                        Path.of(
+                                "G:\\Music\\Panic! At The Disco"
+                        );
+
+                System.out.println();
+                System.out.println(
+                        "========== VINYLCRAFT MUSIC LIBRARY =========="
+                );
+
+                MusicLibraryEntry library =
+                        MusicLibraryScanner.scan(
+                                musicFolder
+                        );
+
+                if (library == null) {
+
+                        System.out.println(
+                                "[VinylCraft] No se pudo analizar la carpeta:"
+                        );
+
+                        System.out.println(
+                                musicFolder
+                        );
+
+                        return;
+                }
+
+                printLibraryTree(
+                        library,
+                        0
+                );
+
+                System.out.println(
+                        "=============================================="
+                );
+
+                System.out.println();
+                }
+
+
+                private static void printLibraryTree(
+                        MusicLibraryEntry entry,
+                        int depth) {
+
+                String indent =
+                        "  ".repeat(depth);
+
+                String icon =
+                        switch (entry.type()) {
+
+                                case FOLDER ->
+                                        "[DIR] ";
+
+                                case AUDIO_FILE ->
+                                        "[AUDIO] ";
+
+                                case IMAGE_FILE ->
+                                        "[IMAGE] ";
+                        };
+
+                System.out.println(
+                        indent
+                                + icon
+                                + entry.name()
+                );
+
+                for (
+                        MusicLibraryEntry child
+                                : entry.children()
+                ) {
+
+                        printLibraryTree(
+                                child,
+                                depth + 1
+                        );
+                }
+        }
+
+        private static void testAudioMetadata() {
+                Path audioFile =
+                        Path.of(
+                                "G:\\Music\\Panic! At The Disco"
+                                + "\\Death of a Bachelor"
+                                + "\\10 House of Memories.mp3"
+                        );
+
+                System.out.println();
+                System.out.println(
+                        "========== VINYLCRAFT METADATA =========="
+                );
+
+                AudioMetadata metadata =
+                        AudioMetadataReader.read(audioFile);
+
+                if (metadata == null) {
+
+                        System.out.println(
+                                "[VinylCraft] No se pudieron obtener "
+                                        + "los metadatos."
+                        );
+
+                        System.out.println(
+                                "=========================================="
+                        );
+
+                        return;
+                }
+
+                System.out.println(
+                        "Archivo:      "
+                                + metadata.file().getFileName()
+                );
+
+                System.out.println(
+                        "Titulo:       "
+                                + metadata.title()
+                );
+
+                System.out.println(
+                        "Artista:      "
+                                + metadata.artist()
+                );
+
+                System.out.println(
+                        "Album:        "
+                                + metadata.album()
+                );
+
+                System.out.println(
+                        "Album Artist: "
+                                + metadata.albumArtist()
+                );
+
+                System.out.println(
+                        "Pista:        "
+                                + metadata.trackNumber()
+                );
+
+                System.out.println(
+                        "Disco:        "
+                                + metadata.discNumber()
+                );
+
+                System.out.println(
+                        "Año:          "
+                                + metadata.year()
+                );
+
+                System.out.println(
+                        "Duracion:     "
+                                + metadata.formattedDuration()
+                );
+
+                System.out.println(
+                        "Portada:      "
+                                + (
+                                        metadata.hasEmbeddedCover()
+                                                ? "SI"
+                                                : "NO"
+                                )
+                );
+
+                if (metadata.hasEmbeddedCover()) {
+
+                        System.out.println(
+                                "Portada bytes: "
+                                        + metadata.embeddedCover().length
+                        );
+                }
+
+                System.out.println(
+                        "=========================================="
+                );
+
+                System.out.println();
+                }
 }
