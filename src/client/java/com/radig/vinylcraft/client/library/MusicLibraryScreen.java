@@ -614,17 +614,14 @@ public class MusicLibraryScreen extends Screen {
         }
 
         /*
-        * Altura realmente disponible dentro del panel.
+        * Altura disponible dentro del panel.
         */
         int availablePanelHeight =
                 panelBottom - y;
 
         /*
-        * Si tenemos mucha altura:
-        * portada grande arriba.
-        *
-        * Si la pantalla es baja:
-        * portada pequeña junto al título.
+        * Si hay suficiente altura usamos portada grande.
+        * Si no, usamos portada compacta junto al título.
         */
         boolean largeCoverMode =
                 coverTexture != null
@@ -635,33 +632,76 @@ public class MusicLibraryScreen extends Screen {
         * PORTADA GRANDE
         * ─────────────────────────────
         */
+
         if (largeCoverMode) {
 
-            int coverSize =
+            int maxCoverSize =
                     Math.min(
                             usableWidth,
                             90
                     );
 
+            int drawWidth = maxCoverSize;
+            int drawHeight = maxCoverSize;
+
+            AlbumCoverTextureManager.CoverSize sourceSize =
+                    AlbumCoverTextureManager.getSize(
+                            coverTexture
+                    );
+
+            if (sourceSize != null) {
+
+                if (sourceSize.width() >= sourceSize.height()) {
+
+                    drawHeight =
+                            Math.max(
+                                    1,
+                                    Math.round(
+                                            maxCoverSize
+                                                    * (
+                                                        sourceSize.height()
+                                                        / (float) sourceSize.width()
+                                                    )
+                                    )
+                            );
+
+                } else {
+
+                    drawWidth =
+                            Math.max(
+                                    1,
+                                    Math.round(
+                                            maxCoverSize
+                                                    * (
+                                                        sourceSize.width()
+                                                        / (float) sourceSize.height()
+                                                    )
+                                    )
+                            );
+                }
+            }
+
             int coverX =
                     panelX
-                            + (panelWidth - coverSize) / 2;
+                            + (panelWidth - drawWidth) / 2;
+
+            int coverY = y;
 
             graphics.blit(
                     RenderPipelines.GUI_TEXTURED,
                     coverTexture,
                     coverX,
-                    y,
+                    coverY,
                     0.0F,
                     0.0F,
-                    coverSize,
-                    coverSize,
-                    coverSize,
-                    coverSize
+                    drawWidth,
+                    drawHeight,
+                    drawWidth,
+                    drawHeight
             );
 
             y +=
-                    coverSize + 10;
+                    drawHeight + 10;
         }
 
         /*
@@ -683,32 +723,78 @@ public class MusicLibraryScreen extends Screen {
                         && !largeCoverMode
         ) {
 
-            compactCoverSize =
-                    Math.min(
-                            42,
-                            Math.max(
-                                    32,
-                                    usableWidth / 3
-                            )
+            compactCoverSize = 42;
+
+            int drawWidth =
+                    compactCoverSize;
+
+            int drawHeight =
+                    compactCoverSize;
+
+            AlbumCoverTextureManager.CoverSize sourceSize =
+                    AlbumCoverTextureManager.getSize(
+                            coverTexture
                     );
+
+            if (sourceSize != null) {
+
+                if (
+                        sourceSize.width()
+                                >= sourceSize.height()
+                ) {
+
+                    drawHeight =
+                            Math.max(
+                                    1,
+                                    Math.round(
+                                            compactCoverSize
+                                                    * (
+                                                        sourceSize.height()
+                                                        / (float) sourceSize.width()
+                                                    )
+                                    )
+                            );
+
+                } else {
+
+                    drawWidth =
+                            Math.max(
+                                    1,
+                                    Math.round(
+                                            compactCoverSize
+                                                    * (
+                                                        sourceSize.width()
+                                                        / (float) sourceSize.height()
+                                                    )
+                                    )
+                            );
+                }
+            }
 
             int coverX =
                     panelX
                             + panelWidth
                             - padding
-                            - compactCoverSize;
+                            - drawWidth;
+
+            int coverY =
+                    y
+                            + (
+                                compactCoverSize
+                                - drawHeight
+                            ) / 2;
 
             graphics.blit(
                     RenderPipelines.GUI_TEXTURED,
                     coverTexture,
                     coverX,
-                    y,
+                    coverY,
                     0.0F,
                     0.0F,
-                    compactCoverSize,
-                    compactCoverSize,
-                    compactCoverSize,
-                    compactCoverSize
+                    drawWidth,
+                    drawHeight,
+                    drawWidth,
+                    drawHeight
             );
 
             topTextWidth =
@@ -722,7 +808,7 @@ public class MusicLibraryScreen extends Screen {
 
         /*
         * ─────────────────────────────
-        * Título
+        * TÍTULO
         * ─────────────────────────────
         */
 
@@ -744,7 +830,7 @@ public class MusicLibraryScreen extends Screen {
         y += 18;
 
         /*
-        * Artista
+        * ARTISTA
         */
 
         String artist =
@@ -763,13 +849,11 @@ public class MusicLibraryScreen extends Screen {
         );
 
         /*
-        * En modo compacto dejamos terminar primero
-        * la miniatura antes de continuar con los datos.
+        * En modo compacto esperamos a que termine
+        * el espacio ocupado por la portada.
         */
-        if (
-                compactCoverSize > 0
-                        && compactCoverSize > 36
-        ) {
+
+        if (compactCoverSize > 0) {
 
             y =
                     panelTop
@@ -784,7 +868,7 @@ public class MusicLibraryScreen extends Screen {
 
         /*
         * ─────────────────────────────
-        * Datos
+        * METADATOS
         * ─────────────────────────────
         */
 

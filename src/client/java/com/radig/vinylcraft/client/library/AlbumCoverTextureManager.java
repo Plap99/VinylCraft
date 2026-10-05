@@ -23,6 +23,12 @@ public final class AlbumCoverTextureManager {
     private static final Map<String, Identifier> TEXTURE_CACHE =
             new HashMap<>();
 
+    private static final Map<Identifier, CoverSize> TEXTURE_SIZES =
+            new HashMap<>();
+
+    public record CoverSize(int width, int height) {
+    }
+
     private static int nextTextureId = 0;
 
     private AlbumCoverTextureManager() {
@@ -83,6 +89,14 @@ public final class AlbumCoverTextureManager {
             TEXTURE_CACHE.put(
                     cacheKey,
                     textureId
+            );
+
+            TEXTURE_SIZES.put(
+                    textureId,
+                    new CoverSize(
+                            image.getWidth(),
+                            image.getHeight()
+                    )
             );
 
             System.out.println(
@@ -295,6 +309,12 @@ public final class AlbumCoverTextureManager {
                 .toString();
     }
 
+    public static CoverSize getSize(
+            Identifier textureId) {
+
+        return TEXTURE_SIZES.get(textureId);
+    }
+
     public static void clear() {
 
         Minecraft minecraft =
@@ -314,6 +334,7 @@ public final class AlbumCoverTextureManager {
         }
 
         TEXTURE_CACHE.clear();
+        TEXTURE_SIZES.clear();
 
         nextTextureId = 0;
 
