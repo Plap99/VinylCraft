@@ -1,7 +1,6 @@
 package com.radig.vinylcraft.client.library;
 
 import java.nio.file.Path;
-import java.util.List;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -11,7 +10,10 @@ import net.minecraft.network.chat.Component;
 public class MusicLibraryScreen extends Screen {
 
     private Path selectedFolder;
-
+    private MusicLibraryTreeWidget treeWidget;
+    private Button removeButton;
+    private AudioMetadata selectedMetadata;
+    
     public MusicLibraryScreen() {
         super(Component.literal("Biblioteca VinylCraft"));
     }
@@ -52,63 +54,72 @@ public class MusicLibraryScreen extends Screen {
                 .build()
         );
 
-        List<Path> folders =
-                MusicLibraryManager.getRootFolders();
+        int contentWidth =
+                Math.min(
+                        620,
+                        this.width - 40
+                );
 
-        int y = 95;
+        int contentX =
+                centerX - contentWidth / 2;
 
-        for (Path folder : folders) {
+        int treeWidth;
 
-            Path currentFolder = folder;
-
-            String displayName =
-                    getFolderDisplayName(currentFolder);
-
-            boolean selected =
-                    currentFolder.equals(selectedFolder);
-
-            String buttonText =
-                    selected
-                            ? "▶ " + displayName
-                            : displayName;
-
-            this.addRenderableWidget(
-                    Button.builder(
-                            Component.literal(buttonText),
-                            button -> {
-                                selectedFolder =
-                                        currentFolder;
-
-                                this.rebuildWidgets();
-                            }
-                    )
-                    .bounds(
-                            centerX - 155,
-                            y,
-                            310,
-                            20
-                    )
-                    .build()
-            );
-
-            y += 24;
+        if (contentWidth >= 500) {
+            treeWidth =
+                    (int) (contentWidth * 0.58);
+        } else {
+            treeWidth =
+                    contentWidth;
         }
 
-        Button removeButton =
+        int treeTop = 90;
+
+        int bottomMargin = 18;
+        int buttonHeight = 20;
+        int gapAboveButtons = 8;
+
+        int buttonsY =
+                this.height
+                - bottomMargin
+                - buttonHeight;
+
+        int treeBottom =
+                buttonsY
+                - gapAboveButtons;
+
+        int treeHeight =
+                treeBottom
+                - treeTop;
+
+        treeWidget =
+                new MusicLibraryTreeWidget(
+                        contentX,
+                        treeTop,
+                        treeWidth,
+                        treeHeight
+                );
+
+        this.addRenderableWidget(treeWidget);
+
+        treeWidget.setSelectionChangedListener(
+                this::handleTreeSelectionChanged
+        );
+
+        removeButton =
                 Button.builder(
                         Component.literal("− Quitar carpeta"),
                         button -> removeSelectedFolder()
                 )
                 .bounds(
                         centerX - 155,
-                        this.height - 65,
+                        buttonsY,
                         145,
-                        20
+                        buttonHeight
                 )
                 .build();
 
-        removeButton.active =
-                selectedFolder != null;
+        updateRemoveButton();
 
         this.addRenderableWidget(
                 removeButton
@@ -121,9 +132,9 @@ public class MusicLibraryScreen extends Screen {
                 )
                 .bounds(
                         centerX + 10,
-                        this.height - 65,
+                        buttonsY,
                         145,
-                        20
+                        buttonHeight
                 )
                 .build()
         );
@@ -152,36 +163,136 @@ public class MusicLibraryScreen extends Screen {
 
     private void removeSelectedFolder() {
 
-        if (selectedFolder == null) {
+        if (treeWidget == null) {
+            return;
+        }
+
+        Path selected =
+                treeWidget.getSelectedPath();
+
+        if (selected == null) {
+            return;
+        }
+
+        Path normalizedSelected =
+                selected.toAbsolutePath().normalize();
+
+        boolean isRootFolder =
+                MusicLibraryManager
+                        .getRootFolders()
+                        .stream()
+                        .map(path ->
+                                path.toAbsolutePath()
+                                        .normalize()
+                        )
+                        .anyMatch(
+                                normalizedSelected::equals
+                        );
+
+        if (!isRootFolder) {
             return;
         }
 
         MusicLibraryManager.removeRootFolder(
-                selectedFolder
+                normalizedSelected
         );
 
         MusicLibraryConfig.save();
 
-        selectedFolder = null;
-
         this.rebuildWidgets();
     }
 
-    private String getFolderDisplayName(
-            Path folder) {
+    private void updateRemoveButton() {
 
-        if (folder == null) {
-            return "";
+        if (
+                removeButton == null
+                || treeWidget == null
+        ) {
+            return;
         }
 
-        Path fileName =
-                folder.getFileName();
+        Path selected =
+                treeWidget.getSelectedPath();
 
-        if (fileName != null) {
-            return fileName.toString();
+        boolean isRootFolder = false;
+
+        if (selected != null) {
+
+            Path normalizedSelected =
+                    selected.toAbsolutePath().normalize();
+
+            for (
+                    Path root :
+                    MusicLibraryManager.getRootFolders()
+            ) {
+
+                if (
+                        root.toAbsolutePath()
+                                .normalize()
+                                .equals(normalizedSelected)
+                ) {
+
+                    isRootFolder = true;
+                    break;
+                }
+            }
         }
 
-        return folder.toString();
+        removeButton.active =
+                isRootFolder;
+    }
+
+    private void handleTreeSelectionChanged() {
+
+        updateRemoveButton();
+
+        selectedMetadata = null;
+
+        if (treeWidget == null) {
+            return;
+        }
+
+        MusicLibraryEntry entry =
+                treeWidget.getSelectedEntry();
+
+        if (
+                entry == null
+                || !entry.isAudioFile()
+        ) {
+            return;
+        }
+
+        selectedMetadata =
+                AudioMetadataCache.get(
+                        entry.path()
+                );
+
+        if (selectedMetadata != null) {
+
+            System.out.println(
+                    "[VinylCraft] Metadata seleccionada:"
+            );
+
+            System.out.println(
+                    "  Título: "
+                            + selectedMetadata.title()
+            );
+
+            System.out.println(
+                    "  Artista: "
+                            + selectedMetadata.artist()
+            );
+
+            System.out.println(
+                    "  Álbum: "
+                            + selectedMetadata.album()
+            );
+
+            System.out.println(
+                    "  Duración: "
+                            + selectedMetadata.formattedDuration()
+            );
+        }
     }
 
     @Override
@@ -231,14 +342,92 @@ public class MusicLibraryScreen extends Screen {
             );
         }
 
-        if (selectedFolder != null) {
+        if (selectedMetadata != null) {
 
-            graphics.centeredText(
+            int contentWidth =
+                    Math.min(
+                            620,
+                            this.width - 40
+                    );
+
+            int contentX =
+                    centerX - contentWidth / 2;
+
+            int treeWidth =
+                    contentWidth >= 500
+                            ? (int) (contentWidth * 0.58)
+                            : contentWidth;
+
+            int panelX =
+                    contentX
+                    + treeWidth
+                    + 15;
+
+            int panelY = 100;
+
+
+            int panelWidth =
+                    contentWidth
+                    - treeWidth
+                    - 15;
+
+            if (panelWidth <= 0) {
+                return;
+            }
+
+            graphics.text(
                     this.font,
-                    selectedFolder.toString(),
-                    centerX,
-                    this.height - 88,
-                    0xFFAAAAAA
+                    selectedMetadata.title(),
+                    panelX,
+                    panelY,
+                    0xFFFFFFFF,
+                    true
+            );
+
+            graphics.text(
+                    this.font,
+                    selectedMetadata.artist(),
+                    panelX,
+                    panelY + 18,
+                    0xFFAAAAAA,
+                    true
+            );
+
+            graphics.text(
+                    this.font,
+                    "Álbum: " + selectedMetadata.album(),
+                    panelX,
+                    panelY + 45,
+                    0xFFCCCCCC,
+                    true
+            );
+
+            graphics.text(
+                    this.font,
+                    "Año: " + selectedMetadata.year(),
+                    panelX,
+                    panelY + 63,
+                    0xFFCCCCCC,
+                    true
+            );
+
+            graphics.text(
+                    this.font,
+                    "Pista: " + selectedMetadata.trackNumber(),
+                    panelX,
+                    panelY + 81,
+                    0xFFCCCCCC,
+                    true
+            );
+
+            graphics.text(
+                    this.font,
+                    "Duración: "
+                            + selectedMetadata.formattedDuration(),
+                    panelX,
+                    panelY + 99,
+                    0xFFCCCCCC,
+                    true
             );
         }
     }
