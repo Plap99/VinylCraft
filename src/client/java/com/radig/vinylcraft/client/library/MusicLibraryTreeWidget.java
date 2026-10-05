@@ -149,6 +149,14 @@ public class MusicLibraryTreeWidget
             int mouseY,
             float delta) {
 
+        graphics.fill(
+                getX(),
+                getY(),
+                getX() + width,
+                getY() + height,
+                0x88000000
+        );
+        
         int top = getY();
         int bottom = getY() + height;
 

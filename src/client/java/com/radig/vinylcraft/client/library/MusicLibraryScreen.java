@@ -9,11 +9,24 @@ import net.minecraft.network.chat.Component;
 
 public class MusicLibraryScreen extends Screen {
 
-    private Path selectedFolder;
+    private static final int SIDE_MARGIN = 24;
+    private static final int MAX_CONTENT_WIDTH = 1000;
+
+    private static final int TWO_COLUMN_MIN_WIDTH = 360;
+
+    private static final int BUTTON_TOP = 55;
+    private static final int BUTTON_HEIGHT = 20;
+    private static final int BUTTON_GAP = 6;
+
+    private static final int CONTENT_TOP = 90;
+    private static final int CONTENT_BOTTOM_MARGIN = 18;
+    private static final int PANEL_GAP = 10;
+
     private MusicLibraryTreeWidget treeWidget;
     private Button removeButton;
+
     private AudioMetadata selectedMetadata;
-    
+
     public MusicLibraryScreen() {
         super(Component.literal("Biblioteca VinylCraft"));
     }
@@ -23,106 +36,70 @@ public class MusicLibraryScreen extends Screen {
 
         int centerX = this.width / 2;
 
+        int contentWidth =
+                getContentWidth();
+
+        int contentX =
+                centerX - contentWidth / 2;
+
+        /*
+         * ─────────────────────────────────────
+         * Barra superior
+         * ─────────────────────────────────────
+         */
+
+        int buttonWidth =
+                (contentWidth - BUTTON_GAP * 3) / 4;
+
         this.addRenderableWidget(
                 Button.builder(
                         Component.literal("+ Agregar carpeta"),
                         button -> addFolder()
                 )
                 .bounds(
-                        centerX - 155,
-                        55,
-                        145,
-                        20
+                        contentX,
+                        BUTTON_TOP,
+                        buttonWidth,
+                        BUTTON_HEIGHT
                 )
                 .build()
         );
 
+        removeButton =
+                Button.builder(
+                        Component.literal("- Quitar carpeta"),
+                        button -> removeSelectedFolder()
+                )
+                .bounds(
+                        contentX
+                                + buttonWidth
+                                + BUTTON_GAP,
+                        BUTTON_TOP,
+                        buttonWidth,
+                        BUTTON_HEIGHT
+                )
+                .build();
+
+        this.addRenderableWidget(
+                removeButton
+        );
+
         this.addRenderableWidget(
                 Button.builder(
-                        Component.literal("↻ Actualizar"),
+                        Component.literal("Actualizar"),
                         button -> {
                             MusicLibraryManager.refresh();
                             this.rebuildWidgets();
                         }
                 )
                 .bounds(
-                        centerX + 10,
-                        55,
-                        145,
-                        20
+                        contentX
+                                + (buttonWidth + BUTTON_GAP) * 2,
+                        BUTTON_TOP,
+                        buttonWidth,
+                        BUTTON_HEIGHT
                 )
                 .build()
-        );
-
-        int contentWidth =
-                Math.min(
-                        620,
-                        this.width - 40
-                );
-
-        int contentX =
-                centerX - contentWidth / 2;
-
-        int treeWidth;
-
-        if (contentWidth >= 500) {
-            treeWidth =
-                    (int) (contentWidth * 0.58);
-        } else {
-            treeWidth =
-                    contentWidth;
-        }
-
-        int treeTop = 90;
-
-        int bottomMargin = 18;
-        int buttonHeight = 20;
-        int gapAboveButtons = 8;
-
-        int buttonsY =
-                this.height
-                - bottomMargin
-                - buttonHeight;
-
-        int treeBottom =
-                buttonsY
-                - gapAboveButtons;
-
-        int treeHeight =
-                treeBottom
-                - treeTop;
-
-        treeWidget =
-                new MusicLibraryTreeWidget(
-                        contentX,
-                        treeTop,
-                        treeWidth,
-                        treeHeight
-                );
-
-        this.addRenderableWidget(treeWidget);
-
-        treeWidget.setSelectionChangedListener(
-                this::handleTreeSelectionChanged
-        );
-
-        removeButton =
-                Button.builder(
-                        Component.literal("− Quitar carpeta"),
-                        button -> removeSelectedFolder()
-                )
-                .bounds(
-                        centerX - 155,
-                        buttonsY,
-                        145,
-                        buttonHeight
-                )
-                .build();
-
-        updateRemoveButton();
-
-        this.addRenderableWidget(
-                removeButton
         );
 
         this.addRenderableWidget(
@@ -131,14 +108,62 @@ public class MusicLibraryScreen extends Screen {
                         button -> this.onClose()
                 )
                 .bounds(
-                        centerX + 10,
-                        buttonsY,
-                        145,
-                        buttonHeight
+                        contentX
+                                + (buttonWidth + BUTTON_GAP) * 3,
+                        BUTTON_TOP,
+                        buttonWidth,
+                        BUTTON_HEIGHT
                 )
                 .build()
         );
+
+        /*
+         * ─────────────────────────────────────
+         * Área principal
+         *
+         *      60 % árbol
+         *      40 % información
+         * ─────────────────────────────────────
+         */
+
+        int treeWidth =
+                getTreeWidth(contentWidth);
+
+        int contentBottom =
+                this.height
+                        - CONTENT_BOTTOM_MARGIN;
+
+        int contentHeight =
+                Math.max(
+                        40,
+                        contentBottom
+                                - CONTENT_TOP
+                );
+
+        treeWidget =
+                new MusicLibraryTreeWidget(
+                        contentX,
+                        CONTENT_TOP,
+                        treeWidth,
+                        contentHeight
+                );
+
+        this.addRenderableWidget(
+                treeWidget
+        );
+
+        treeWidget.setSelectionChangedListener(
+                this::handleTreeSelectionChanged
+        );
+
+        updateRemoveButton();
     }
+
+    /*
+     * ─────────────────────────────────────────
+     * Carpetas
+     * ─────────────────────────────────────────
+     */
 
     private void addFolder() {
 
@@ -154,9 +179,6 @@ public class MusicLibraryScreen extends Screen {
         );
 
         MusicLibraryConfig.save();
-
-        selectedFolder =
-                folder.toAbsolutePath().normalize();
 
         this.rebuildWidgets();
     }
@@ -175,14 +197,17 @@ public class MusicLibraryScreen extends Screen {
         }
 
         Path normalizedSelected =
-                selected.toAbsolutePath().normalize();
+                selected
+                        .toAbsolutePath()
+                        .normalize();
 
         boolean isRootFolder =
                 MusicLibraryManager
                         .getRootFolders()
                         .stream()
                         .map(path ->
-                                path.toAbsolutePath()
+                                path
+                                        .toAbsolutePath()
                                         .normalize()
                         )
                         .anyMatch(
@@ -199,14 +224,22 @@ public class MusicLibraryScreen extends Screen {
 
         MusicLibraryConfig.save();
 
+        selectedMetadata = null;
+
         this.rebuildWidgets();
     }
+
+    /*
+     * ─────────────────────────────────────────
+     * Selección
+     * ─────────────────────────────────────────
+     */
 
     private void updateRemoveButton() {
 
         if (
                 removeButton == null
-                || treeWidget == null
+                        || treeWidget == null
         ) {
             return;
         }
@@ -219,7 +252,9 @@ public class MusicLibraryScreen extends Screen {
         if (selected != null) {
 
             Path normalizedSelected =
-                    selected.toAbsolutePath().normalize();
+                    selected
+                            .toAbsolutePath()
+                            .normalize();
 
             for (
                     Path root :
@@ -227,7 +262,8 @@ public class MusicLibraryScreen extends Screen {
             ) {
 
                 if (
-                        root.toAbsolutePath()
+                        root
+                                .toAbsolutePath()
                                 .normalize()
                                 .equals(normalizedSelected)
                 ) {
@@ -257,7 +293,7 @@ public class MusicLibraryScreen extends Screen {
 
         if (
                 entry == null
-                || !entry.isAudioFile()
+                        || !entry.isAudioFile()
         ) {
             return;
         }
@@ -266,34 +302,43 @@ public class MusicLibraryScreen extends Screen {
                 AudioMetadataCache.get(
                         entry.path()
                 );
-
-        if (selectedMetadata != null) {
-
-            System.out.println(
-                    "[VinylCraft] Metadata seleccionada:"
-            );
-
-            System.out.println(
-                    "  Título: "
-                            + selectedMetadata.title()
-            );
-
-            System.out.println(
-                    "  Artista: "
-                            + selectedMetadata.artist()
-            );
-
-            System.out.println(
-                    "  Álbum: "
-                            + selectedMetadata.album()
-            );
-
-            System.out.println(
-                    "  Duración: "
-                            + selectedMetadata.formattedDuration()
-            );
-        }
     }
+
+    /*
+     * ─────────────────────────────────────────
+     * Layout
+     * ─────────────────────────────────────────
+     */
+
+    private int getContentWidth() {
+
+        return Math.min(
+                MAX_CONTENT_WIDTH,
+                Math.max(
+                        320,
+                        this.width
+                                - SIDE_MARGIN * 2
+                )
+        );
+    }
+
+    private int getTreeWidth(
+            int contentWidth) {
+
+        if (contentWidth < TWO_COLUMN_MIN_WIDTH) {
+            return contentWidth;
+        }
+
+        return (int) (
+                contentWidth * 0.60F
+        );
+    }
+
+    /*
+     * ─────────────────────────────────────────
+     * Render
+     * ─────────────────────────────────────────
+     */
 
     @Override
     public void extractRenderState(
@@ -309,7 +354,8 @@ public class MusicLibraryScreen extends Screen {
                 delta
         );
 
-        int centerX = this.width / 2;
+        int centerX =
+                this.width / 2;
 
         graphics.centeredText(
                 this.font,
@@ -327,109 +373,357 @@ public class MusicLibraryScreen extends Screen {
                 0xFFAAAAAA
         );
 
+        int contentWidth =
+                getContentWidth();
+
+        int contentX =
+                centerX
+                        - contentWidth / 2;
+
+        int treeWidth =
+                getTreeWidth(
+                        contentWidth
+                );
+
+        int contentBottom =
+                this.height
+                        - CONTENT_BOTTOM_MARGIN;
+
+        /*
+        * Si la ventana permite dos columnas,
+        * dibujamos una división visible 60 / 40.
+        */
+
+        if (contentWidth >= TWO_COLUMN_MIN_WIDTH) {
+
+            int dividerX =
+                    contentX
+                    + treeWidth
+                    + PANEL_GAP / 2;
+
+            /*
+            * Línea divisoria
+            */
+
+            graphics.fill(
+                    dividerX,
+                    CONTENT_TOP + 6,
+                    dividerX + 1,
+                    contentBottom - 6,
+                    0xFF777777
+            );
+
+            int panelX =
+                    contentX
+                    + treeWidth
+                    + PANEL_GAP;
+
+            int panelWidth =
+                    contentWidth
+                    - treeWidth
+                    - PANEL_GAP;
+
+            drawMetadataPanel(
+                    graphics,
+                    panelX,
+                    CONTENT_TOP,
+                    panelWidth,
+                    contentBottom
+            );
+        }
+
         if (
                 MusicLibraryManager
                         .getRootFolders()
                         .isEmpty()
         ) {
 
+            int emptyMessageX =
+                    contentX
+                    + treeWidth / 2;
+
             graphics.centeredText(
                     this.font,
                     "Todavía no hay carpetas configuradas",
-                    centerX,
-                    105,
+                    emptyMessageX,
+                    CONTENT_TOP + 15,
                     0xFF888888
             );
         }
 
-        if (selectedMetadata != null) {
+        /*
+         * Biblioteca vacía
+         */
 
-            int contentWidth =
-                    Math.min(
-                            620,
-                            this.width - 40
-                    );
+        if (
+                MusicLibraryManager
+                        .getRootFolders()
+                        .isEmpty()
+        ) {
 
-            int contentX =
-                    centerX - contentWidth / 2;
-
-            int treeWidth =
-                    contentWidth >= 500
-                            ? (int) (contentWidth * 0.58)
-                            : contentWidth;
+            int messageX;
 
             int panelX =
                     contentX
                     + treeWidth
-                    + 15;
-
-            int panelY = 100;
-
+                    + PANEL_GAP;
 
             int panelWidth =
                     contentWidth
                     - treeWidth
-                    - 15;
+                    - PANEL_GAP;
 
-            if (panelWidth <= 0) {
-                return;
-            }
+            /*
+            * Panel derecho
+            */
 
-            graphics.text(
-                    this.font,
-                    selectedMetadata.title(),
+            graphics.fill(
                     panelX,
-                    panelY,
-                    0xFFFFFFFF,
-                    true
+                    CONTENT_TOP,
+                    panelX + panelWidth,
+                    contentBottom,
+                    0x99000000
             );
 
-            graphics.text(
-                    this.font,
-                    selectedMetadata.artist(),
-                    panelX,
-                    panelY + 18,
-                    0xFFAAAAAA,
-                    true
+            /*
+            * Separador vertical.
+            */
+
+            int dividerX =
+                    contentX
+                    + treeWidth
+                    + PANEL_GAP / 2;
+
+            graphics.fill(
+                    dividerX,
+                    CONTENT_TOP,
+                    dividerX + 2,
+                    contentBottom,
+                    0xFFAAAAAA
             );
 
-            graphics.text(
+            /*
+            * Título temporal para comprobar
+            * visualmente la segunda columna.
+            */
+
+            graphics.centeredText(
                     this.font,
-                    "Álbum: " + selectedMetadata.album(),
-                    panelX,
-                    panelY + 45,
-                    0xFFCCCCCC,
-                    true
+                    "Información",
+                    panelX + panelWidth / 2,
+                    CONTENT_TOP + 10,
+                    0xFFFFFFFF
             );
 
-            graphics.text(
-                    this.font,
-                    "Año: " + selectedMetadata.year(),
+            drawMetadataPanel(
+                    graphics,
                     panelX,
-                    panelY + 63,
-                    0xFFCCCCCC,
-                    true
-            );
-
-            graphics.text(
-                    this.font,
-                    "Pista: " + selectedMetadata.trackNumber(),
-                    panelX,
-                    panelY + 81,
-                    0xFFCCCCCC,
-                    true
-            );
-
-            graphics.text(
-                    this.font,
-                    "Duración: "
-                            + selectedMetadata.formattedDuration(),
-                    panelX,
-                    panelY + 99,
-                    0xFFCCCCCC,
-                    true
+                    CONTENT_TOP + 22,
+                    panelWidth,
+                    contentBottom
             );
         }
+    }
+
+    /*
+     * ─────────────────────────────────────────
+     * Panel derecho
+     * ─────────────────────────────────────────
+     */
+
+    private void drawMetadataPanel(
+            GuiGraphicsExtractor graphics,
+            int panelX,
+            int panelTop,
+            int panelWidth,
+            int panelBottom) {
+
+        int padding = 12;
+
+        int x =
+                panelX + padding;
+
+        int y =
+                panelTop + padding;
+
+        int usableWidth =
+                panelWidth
+                        - padding * 2;
+
+        if (usableWidth <= 20) {
+            return;
+        }
+
+        if (selectedMetadata == null) {
+
+            graphics.centeredText(
+                    this.font,
+                    "Selecciona una canción",
+                    panelX + panelWidth / 2,
+                    y + 10,
+                    0xFF888888
+            );
+
+            return;
+        }
+
+        /*
+         * Más adelante esta zona superior será
+         * utilizada también por la portada.
+         */
+
+        String title =
+                fitText(
+                        selectedMetadata.title(),
+                        usableWidth
+                );
+
+        graphics.text(
+                this.font,
+                title,
+                x,
+                y,
+                0xFFFFFFFF,
+                true
+        );
+
+        y += 18;
+
+        String artist =
+                fitText(
+                        selectedMetadata.artist(),
+                        usableWidth
+                );
+
+        graphics.text(
+                this.font,
+                artist,
+                x,
+                y,
+                0xFFAAAAAA,
+                true
+        );
+
+        y += 28;
+
+        drawMetadataLine(
+                graphics,
+                "Álbum: ",
+                selectedMetadata.album(),
+                x,
+                y,
+                usableWidth
+        );
+
+        y += 18;
+
+        drawMetadataLine(
+                graphics,
+                "Año: ",
+                String.valueOf(
+                        selectedMetadata.year()
+                ),
+                x,
+                y,
+                usableWidth
+        );
+
+        y += 18;
+
+        drawMetadataLine(
+                graphics,
+                "Pista: ",
+                String.valueOf(
+                        selectedMetadata.trackNumber()
+                ),
+                x,
+                y,
+                usableWidth
+        );
+
+        y += 18;
+
+        drawMetadataLine(
+                graphics,
+                "Duración: ",
+                selectedMetadata.formattedDuration(),
+                x,
+                y,
+                usableWidth
+        );
+    }
+
+    private void drawMetadataLine(
+            GuiGraphicsExtractor graphics,
+            String label,
+            String value,
+            int x,
+            int y,
+            int width) {
+
+        String text =
+                label
+                        + safeText(value);
+
+        graphics.text(
+                this.font,
+                fitText(
+                        text,
+                        width
+                ),
+                x,
+                y,
+                0xFFCCCCCC,
+                true
+        );
+    }
+
+    /*
+     * Recorta únicamente la representación visual.
+     * Nunca modifica metadata ni nombres reales.
+     */
+
+    private String fitText(
+            String text,
+            int width) {
+
+        String safe =
+                safeText(text);
+
+        if (
+                width <= 0
+                        || this.font.width(safe)
+                        <= width
+        ) {
+            return safe;
+        }
+
+        String dots = "...";
+
+        int dotsWidth =
+                this.font.width(dots);
+
+        if (width <= dotsWidth) {
+            return "";
+        }
+
+        return this.font.plainSubstrByWidth(
+                safe,
+                width - dotsWidth
+        ) + dots;
+    }
+
+    private String safeText(
+            String text) {
+
+        if (
+                text == null
+                        || text.isBlank()
+        ) {
+            return "Desconocido";
+        }
+
+        return text;
     }
 
     @Override
