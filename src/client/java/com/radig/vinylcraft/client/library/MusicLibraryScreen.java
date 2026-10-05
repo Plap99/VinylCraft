@@ -7,6 +7,9 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.resources.Identifier;
+
 public class MusicLibraryScreen extends Screen {
 
     private static final int SIDE_MARGIN = 24;
@@ -26,6 +29,7 @@ public class MusicLibraryScreen extends Screen {
     private Button removeButton;
 
     private AudioMetadata selectedMetadata;
+    private AlbumCoverResolver.CoverResult selectedCover;
 
     public MusicLibraryScreen() {
         super(Component.literal("Biblioteca VinylCraft"));
@@ -283,6 +287,7 @@ public class MusicLibraryScreen extends Screen {
         updateRemoveButton();
 
         selectedMetadata = null;
+        selectedCover = null;
 
         if (treeWidget == null) {
             return;
@@ -302,6 +307,37 @@ public class MusicLibraryScreen extends Screen {
                 AudioMetadataCache.get(
                         entry.path()
                 );
+
+        selectedCover =
+                AlbumCoverResolver.resolve(
+                        entry.path(),
+                        selectedMetadata
+                );
+
+        if (selectedCover != null) {
+
+            if (selectedCover.isEmbedded()) {
+
+                System.out.println(
+                        "[VinylCraft] Portada: EMBEBIDA ("
+                                + selectedCover.data().length
+                                + " bytes)"
+                );
+
+            } else {
+
+                System.out.println(
+                        "[VinylCraft] Portada: "
+                                + selectedCover.path()
+                );
+            }
+
+        } else {
+
+            System.out.println(
+                    "[VinylCraft] Portada: no encontrada"
+            );
+        }
     }
 
     /*
@@ -567,15 +603,133 @@ public class MusicLibraryScreen extends Screen {
             return;
         }
 
+        Identifier coverTexture = null;
+
+        if (selectedCover != null) {
+
+            coverTexture =
+                    AlbumCoverTextureManager.getTexture(
+                            selectedCover
+                    );
+        }
+
         /*
-         * Más adelante esta zona superior será
-         * utilizada también por la portada.
-         */
+        * Altura realmente disponible dentro del panel.
+        */
+        int availablePanelHeight =
+                panelBottom - y;
+
+        /*
+        * Si tenemos mucha altura:
+        * portada grande arriba.
+        *
+        * Si la pantalla es baja:
+        * portada pequeña junto al título.
+        */
+        boolean largeCoverMode =
+                coverTexture != null
+                        && availablePanelHeight >= 190;
+
+        /*
+        * ─────────────────────────────
+        * PORTADA GRANDE
+        * ─────────────────────────────
+        */
+        if (largeCoverMode) {
+
+            int coverSize =
+                    Math.min(
+                            usableWidth,
+                            90
+                    );
+
+            int coverX =
+                    panelX
+                            + (panelWidth - coverSize) / 2;
+
+            graphics.blit(
+                    RenderPipelines.GUI_TEXTURED,
+                    coverTexture,
+                    coverX,
+                    y,
+                    0.0F,
+                    0.0F,
+                    coverSize,
+                    coverSize,
+                    coverSize,
+                    coverSize
+            );
+
+            y +=
+                    coverSize + 10;
+        }
+
+        /*
+        * ─────────────────────────────
+        * PORTADA COMPACTA
+        * ─────────────────────────────
+        */
+
+        int textWidth =
+                usableWidth;
+
+        int topTextWidth =
+                usableWidth;
+
+        int compactCoverSize = 0;
+
+        if (
+                coverTexture != null
+                        && !largeCoverMode
+        ) {
+
+            compactCoverSize =
+                    Math.min(
+                            42,
+                            Math.max(
+                                    32,
+                                    usableWidth / 3
+                            )
+                    );
+
+            int coverX =
+                    panelX
+                            + panelWidth
+                            - padding
+                            - compactCoverSize;
+
+            graphics.blit(
+                    RenderPipelines.GUI_TEXTURED,
+                    coverTexture,
+                    coverX,
+                    y,
+                    0.0F,
+                    0.0F,
+                    compactCoverSize,
+                    compactCoverSize,
+                    compactCoverSize,
+                    compactCoverSize
+            );
+
+            topTextWidth =
+                    Math.max(
+                            30,
+                            usableWidth
+                                    - compactCoverSize
+                                    - 6
+                    );
+        }
+
+        /*
+        * ─────────────────────────────
+        * Título
+        * ─────────────────────────────
+        */
 
         String title =
                 fitText(
                         selectedMetadata.title(),
-                        usableWidth
+                        topTextWidth
                 );
 
         graphics.text(
@@ -589,10 +743,14 @@ public class MusicLibraryScreen extends Screen {
 
         y += 18;
 
+        /*
+        * Artista
+        */
+
         String artist =
                 fitText(
                         selectedMetadata.artist(),
-                        usableWidth
+                        topTextWidth
                 );
 
         graphics.text(
@@ -604,7 +762,31 @@ public class MusicLibraryScreen extends Screen {
                 true
         );
 
-        y += 28;
+        /*
+        * En modo compacto dejamos terminar primero
+        * la miniatura antes de continuar con los datos.
+        */
+        if (
+                compactCoverSize > 0
+                        && compactCoverSize > 36
+        ) {
+
+            y =
+                    panelTop
+                            + padding
+                            + compactCoverSize
+                            + 6;
+
+        } else {
+
+            y += 28;
+        }
+
+        /*
+        * ─────────────────────────────
+        * Datos
+        * ─────────────────────────────
+        */
 
         drawMetadataLine(
                 graphics,
@@ -612,7 +794,7 @@ public class MusicLibraryScreen extends Screen {
                 selectedMetadata.album(),
                 x,
                 y,
-                usableWidth
+                textWidth
         );
 
         y += 18;
@@ -625,7 +807,7 @@ public class MusicLibraryScreen extends Screen {
                 ),
                 x,
                 y,
-                usableWidth
+                textWidth
         );
 
         y += 18;
@@ -638,7 +820,7 @@ public class MusicLibraryScreen extends Screen {
                 ),
                 x,
                 y,
-                usableWidth
+                textWidth
         );
 
         y += 18;
@@ -649,7 +831,7 @@ public class MusicLibraryScreen extends Screen {
                 selectedMetadata.formattedDuration(),
                 x,
                 y,
-                usableWidth
+                textWidth
         );
     }
 
