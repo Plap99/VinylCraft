@@ -15,4 +15,7 @@ public interface SoundEngineAccessor {
     @Accessor("instanceToChannel")
     Map<SoundInstance, ChannelAccess.ChannelHandle>
             vinylcraft$getInstanceToChannel();
+
+    @Accessor("channelAccess")
+    ChannelAccess vinylcraft$getChannelAccess();
 }

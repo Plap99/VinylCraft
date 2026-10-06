@@ -3,9 +3,14 @@ package com.radig.vinylcraft.client;
 import com.radig.vinylcraft.VinylCraft;
 import com.radig.vinylcraft.block.entity.ModBlockEntities;
 import com.radig.vinylcraft.client.render.VinylPlayerBlockEntityRenderer;
+import com.radig.vinylcraft.client.config.VinylHudConfig;
+import com.radig.vinylcraft.client.config.VinylHudSettingsScreen;
 import com.radig.vinylcraft.client.render.VinylPlayerTonearmModel;
 import com.radig.vinylcraft.client.render.VinylPlayerButtonModel;
+import com.radig.vinylcraft.client.render.VinylRecorderBlockEntityRenderer;
+import com.radig.vinylcraft.client.render.VinylRecorderTonearmModel;
 import com.radig.vinylcraft.client.sound.VinylPlayerSoundManager;
+import com.radig.vinylcraft.client.music.RecordedAlbumStore;
 import com.radig.vinylcraft.sound.VinylPlayerAudioBridge;
 
 import net.fabricmc.api.ClientModInitializer;
@@ -37,6 +42,8 @@ import org.lwjgl.glfw.GLFW;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.radig.vinylcraft.client.library.MusicLibraryScreen;
+import com.radig.vinylcraft.client.recorder.VinylRecorderScreen;
+import com.radig.vinylcraft.recorder.VinylRecorderClientBridge;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
@@ -47,8 +54,22 @@ public class VinylCraftClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
 
+        RecordedAlbumStore.load();
         registerVinylTooltips();
         MusicLibraryConfig.load();
+        VinylHudConfig.load();
+
+        VinylRecorderClientBridge.setOpenScreenHandler(
+                pos -> {
+                    var client = net.minecraft.client.Minecraft.getInstance();
+
+                    if (client.gui.screen() == null) {
+                        client.gui.setScreen(
+                                new VinylRecorderScreen(pos)
+                        );
+                    }
+                }
+        );
 
         ModelLayerRegistry.registerModelLayer(
                 VinylPlayerBlockEntityRenderer.TONEARM_LAYER,
@@ -60,9 +81,19 @@ public class VinylCraftClient implements ClientModInitializer {
                 VinylPlayerButtonModel::createLayer
         );
 
+        ModelLayerRegistry.registerModelLayer(
+                VinylRecorderBlockEntityRenderer.TONEARM_LAYER,
+                VinylRecorderTonearmModel::createLayer
+        );
+
         BlockEntityRenderers.register(
                 ModBlockEntities.VINYL_PLAYER,
                 VinylPlayerBlockEntityRenderer::new
+        );
+
+        BlockEntityRenderers.register(
+                ModBlockEntities.VINYL_RECORDER,
+                VinylRecorderBlockEntityRenderer::new
         );
 
         /*
@@ -76,16 +107,27 @@ public class VinylCraftClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(
                 client -> {
 
-                while (OPEN_LIBRARY_KEY.consumeClick()) {
+                        while (OPEN_HUD_SETTINGS_KEY.consumeClick()) {
 
-                        if (client.gui.screen() != null) {
-                        continue;
+                                if (client.gui.screen() != null) {
+                                        continue;
+                                }
+
+                                client.gui.setScreen(
+                                        new VinylHudSettingsScreen()
+                                );
                         }
 
-                        client.gui.setScreen(
-                                new MusicLibraryScreen()
-                        );
-                }
+                        while (OPEN_LIBRARY_KEY.consumeClick()) {
+
+                                if (client.gui.screen() != null) {
+                                        continue;
+                                }
+
+                                client.gui.setScreen(
+                                        new MusicLibraryScreen()
+                                );
+                        }
                 }
         );
     }
@@ -122,6 +164,10 @@ public class VinylCraftClient implements ClientModInitializer {
                                 ModAlbums.get(albumId);
 
                         if (album == null) {
+                        lines.add(
+                                Component.literal("Álbum no disponible en esta biblioteca")
+                                        .withStyle(ChatFormatting.RED)
+                        );
                         return;
                         }
 
@@ -354,6 +400,16 @@ public class VinylCraftClient implements ClientModInitializer {
         private static final KeyMapping.Category VINYLCRAFT_CATEGORY =
                 KeyMapping.Category.register(
                         VinylCraft.id("vinylcraft")
+                );
+
+        private static final KeyMapping OPEN_HUD_SETTINGS_KEY =
+                KeyMappingHelper.registerKeyMapping(
+                        new KeyMapping(
+                                "key.vinylcraft.open_hud_settings",
+                                InputConstants.Type.KEYSYM,
+                                GLFW.GLFW_KEY_F6,
+                                VINYLCRAFT_CATEGORY
+                        )
                 );
 
         private static final KeyMapping OPEN_LIBRARY_KEY =

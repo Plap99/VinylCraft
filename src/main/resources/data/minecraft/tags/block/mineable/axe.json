@@ -1,0 +1,18 @@
+{
+  "replace": false,
+  "values": [
+    "vinylcraft:oak_vinyl_player",
+    "vinylcraft:spruce_vinyl_player",
+    "vinylcraft:birch_vinyl_player",
+    "vinylcraft:jungle_vinyl_player",
+    "vinylcraft:acacia_vinyl_player",
+    "vinylcraft:dark_oak_vinyl_player",
+    "vinylcraft:mangrove_vinyl_player",
+    "vinylcraft:cherry_vinyl_player",
+    "vinylcraft:pale_oak_vinyl_player",
+    "vinylcraft:bamboo_vinyl_player",
+    "vinylcraft:crimson_vinyl_player",
+    "vinylcraft:warped_vinyl_player",
+    "vinylcraft:vinyl_recorder"
+  ]
+}

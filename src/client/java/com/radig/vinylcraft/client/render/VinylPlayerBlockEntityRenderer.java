@@ -32,12 +32,16 @@ public class VinylPlayerBlockEntityRenderer
     private final VinylPlayerTonearmModel tonearmModel;
     private final TextureAtlasSprite tonearmSprite;
     private final VinylPlayerButtonModel buttonModel;
+    private final TextureAtlasSprite previousButtonSprite;
+    private final TextureAtlasSprite stopButtonSprite;
     private final TextureAtlasSprite playButtonSprite;
     private final TextureAtlasSprite pauseButtonSprite;
-    private final TextureAtlasSprite stopButtonSprite;
+    private final TextureAtlasSprite nextButtonSprite;
+    private final TextureAtlasSprite previousIconSprite;
+    private final TextureAtlasSprite stopIconSprite;
     private final TextureAtlasSprite playIconSprite;
     private final TextureAtlasSprite pauseIconSprite;
-    private final TextureAtlasSprite stopIconSprite;
+    private final TextureAtlasSprite nextIconSprite;
 
     private static final int FULL_BRIGHT = 0x00F000F0;
 
@@ -103,6 +107,14 @@ public class VinylPlayerBlockEntityRenderer
                 "textures/atlas/blocks.png"
         );
 
+        this.previousButtonSprite = context.sprites().get(
+                new SpriteId(blockAtlas, Identifier.fromNamespaceAndPath(
+                        "vinylcraft", "block/previous_button"))
+        );
+        this.stopButtonSprite = context.sprites().get(
+                new SpriteId(blockAtlas, Identifier.fromNamespaceAndPath(
+                        "vinylcraft", "block/stop_button"))
+        );
         this.playButtonSprite = context.sprites().get(
                 new SpriteId(blockAtlas, Identifier.fromNamespaceAndPath(
                         "vinylcraft", "block/play_button"))
@@ -111,9 +123,9 @@ public class VinylPlayerBlockEntityRenderer
                 new SpriteId(blockAtlas, Identifier.fromNamespaceAndPath(
                         "vinylcraft", "block/pause_button"))
         );
-        this.stopButtonSprite = context.sprites().get(
+        this.nextButtonSprite = context.sprites().get(
                 new SpriteId(blockAtlas, Identifier.fromNamespaceAndPath(
-                        "vinylcraft", "block/stop_button"))
+                        "vinylcraft", "block/next_button"))
         );
 
         /*
@@ -123,6 +135,16 @@ public class VinylPlayerBlockEntityRenderer
          * sobre cada botón. De este modo el símbolo conserva su proporción
          * y NO depende del UV automático del diminuto ModelPart.
          */
+        this.previousIconSprite = context.sprites().get(
+                new SpriteId(blockAtlas, Identifier.fromNamespaceAndPath(
+                        "vinylcraft", "block/previous_icon"))
+        );
+
+        this.stopIconSprite = context.sprites().get(
+                new SpriteId(blockAtlas, Identifier.fromNamespaceAndPath(
+                        "vinylcraft", "block/stop_icon"))
+        );
+
         this.playIconSprite = context.sprites().get(
                 new SpriteId(blockAtlas, Identifier.fromNamespaceAndPath(
                         "vinylcraft", "block/play_icon"))
@@ -133,9 +155,9 @@ public class VinylPlayerBlockEntityRenderer
                         "vinylcraft", "block/pause_icon"))
         );
 
-        this.stopIconSprite = context.sprites().get(
+        this.nextIconSprite = context.sprites().get(
                 new SpriteId(blockAtlas, Identifier.fromNamespaceAndPath(
-                        "vinylcraft", "block/stop_icon"))
+                        "vinylcraft", "block/next_icon"))
         );
     }
 
@@ -384,12 +406,12 @@ public class VinylPlayerBlockEntityRenderer
                         : playButtonSprite;
 
         queue.submitModelPart(
-                buttonModel.playPause(),
+                buttonModel.previous(),
                 matrices,
-                RenderTypes.entityCutout(actionSprite.atlasLocation()),
+                RenderTypes.entityCutout(previousButtonSprite.atlasLocation()),
                 FULL_BRIGHT,
                 OverlayTexture.NO_OVERLAY,
-                actionSprite
+                previousButtonSprite
         );
 
         queue.submitModelPart(
@@ -401,33 +423,62 @@ public class VinylPlayerBlockEntityRenderer
                 stopButtonSprite
         );
 
-        /*
-         * Iconos superiores.
-         *
-         * Cada símbolo usa una textura transparente 16x16 sobre una
-         * superficie CUADRADA independiente. Así ▶, Ⅱ y ■ no se deforman
-         * por la proporción 2.5:1 del botón físico.
-         *
-         * En el PLAY invertimos U porque, visto desde el frente del modelo
-         * NORTH, el +X local aparece a la izquierda del jugador. Con el UV
-         * espejado, ▶ queda visualmente apuntando hacia la derecha.
-         */
-        submitButtonIcon(
-                queue,
+        queue.submitModelPart(
+                buttonModel.playPause(),
                 matrices,
-                state.playing ? pauseIconSprite : playIconSprite,
-                3.625F,
-                1.10F,
-                !state.playing
+                RenderTypes.entityCutout(actionSprite.atlasLocation()),
+                FULL_BRIGHT,
+                OverlayTexture.NO_OVERLAY,
+                actionSprite
         );
 
-        submitButtonIcon(
+        queue.submitModelPart(
+                buttonModel.next(),
+                matrices,
+                RenderTypes.entityCutout(nextButtonSprite.atlasLocation()),
+                FULL_BRIGHT,
+                OverlayTexture.NO_OVERLAY,
+                nextButtonSprite
+        );
+
+        submitFrontButtonIcon(
+                queue,
+                matrices,
+                previousIconSprite,
+                VinylPlayerButtonModel.PREVIOUS_X
+                        + VinylPlayerButtonModel.WIDTH / 2.0F,
+                VinylPlayerButtonModel.ICON_Y,
+                VinylPlayerButtonModel.ICON_Z
+        );
+
+        submitFrontButtonIcon(
                 queue,
                 matrices,
                 stopIconSprite,
-                5.625F,
-                1.10F,
-                false
+                VinylPlayerButtonModel.STOP_X
+                        + VinylPlayerButtonModel.WIDTH / 2.0F,
+                VinylPlayerButtonModel.ICON_Y,
+                VinylPlayerButtonModel.ICON_Z
+        );
+
+        submitFrontButtonIcon(
+                queue,
+                matrices,
+                state.playing ? pauseIconSprite : playIconSprite,
+                VinylPlayerButtonModel.PLAY_X
+                        + VinylPlayerButtonModel.WIDTH / 2.0F,
+                VinylPlayerButtonModel.ICON_Y,
+                VinylPlayerButtonModel.ICON_Z
+        );
+
+        submitFrontButtonIcon(
+                queue,
+                matrices,
+                nextIconSprite,
+                VinylPlayerButtonModel.NEXT_X
+                        + VinylPlayerButtonModel.WIDTH / 2.0F,
+                VinylPlayerButtonModel.ICON_Y,
+                VinylPlayerButtonModel.ICON_Z
         );
 
         matrices.popPose();
@@ -516,101 +567,93 @@ public class VinylPlayerBlockEntityRenderer
     }
     /*
      * =====================================================
-     * ICONOS DE LOS BOTONES
+     * ICONOS FRONTALES DE LOS BOTONES
      * =====================================================
      *
-     * El botón mide 1.25 x 0.50 unidades de modelo y por eso una
-     * textura cuadrada aplicada directamente al cubo se deforma.
-     *
-     * En su lugar dibujamos un pequeño plano CUADRADO sobre el centro
-     * del botón y le asignamos el sprite completo 0..1.
-     *
-     * El fondo del PNG es transparente: solamente aparece el símbolo.
+     * Los controles ahora están en el frente del tocadiscos.
+     * Dibujamos el icono como un plano vertical delante del botón
+     * para conservar su proporción y evitar que quede recortado.
      */
-    private void submitButtonIcon(
+    private void submitFrontButtonIcon(
             SubmitNodeCollector queue,
             PoseStack matrices,
             TextureAtlasSprite sprite,
             float centerXModel,
-            float centerZModel,
-            boolean mirrorU) {
+            float centerYModel,
+            float zModel) {
 
-        /*
-         * Tamaño físico del símbolo en unidades del modelo 0..16.
-         *
-         * 0.38 cabe dentro de los 0.50 de profundidad del botón,
-         * pero sigue siendo suficientemente grande para verse.
-         */
         final float halfSize =
-                0.19F / 16.0F;
+                0.40F / 16.0F;
 
         final float centerX =
                 centerXModel / 16.0F;
 
-        final float centerZ =
-                centerZModel / 16.0F;
+        final float centerY =
+                centerYModel / 16.0F;
 
-        /*
-         * El botón termina en Y = 5.45.
-         *
-         * Dejamos una pequeña separación real para evitar z-fighting,
-         * sin hacer que el icono parezca flotar.
-         */
-        final float y =
-                5.52F / 16.0F;
+        final float z =
+                zModel / 16.0F;
 
         final float minX = centerX - halfSize;
         final float maxX = centerX + halfSize;
-        final float minZ = centerZ - halfSize;
-        final float maxZ = centerZ + halfSize;
+        final float minY = centerY - halfSize;
+        final float maxY = centerY + halfSize;
 
-        final float uLeft =
-                mirrorU
-                        ? sprite.getU1()
-                        : sprite.getU0();
+        /*
+         * La cara frontal NORTH se ve con el eje X local invertido desde
+         * el jugador. Invertimos U para que ▶, ⏮ y ⏭ no aparezcan
+         * espejados visualmente.
+         */
+        /*
+         * Medio píxel hacia dentro evita que el filtrado/mipmapping del
+         * atlas tome píxeles de sprites vecinos en los bordes transparentes.
+         * Junto con la capa 16x16 del modelo elimina las dos fuentes más
+         * probables del pequeño cuadro fantasma observado en los botones.
+         */
+        final float uInset =
+                (sprite.getU1() - sprite.getU0()) / 32.0F;
+        final float vInset =
+                (sprite.getV1() - sprite.getV0()) / 32.0F;
 
-        final float uRight =
-                mirrorU
-                        ? sprite.getU0()
-                        : sprite.getU1();
-
-        final float vTop = sprite.getV0();
-        final float vBottom = sprite.getV1();
+        final float uLeft = sprite.getU1() - uInset;
+        final float uRight = sprite.getU0() + uInset;
+        final float vTop = sprite.getV0() + vInset;
+        final float vBottom = sprite.getV1() - vInset;
 
         queue.submitCustomGeometry(
                 matrices,
-                RenderTypes.entityTranslucentEmissive(
+                RenderTypes.entityCutout(
                         sprite.atlasLocation()
                 ),
                 (pose, consumer) -> {
 
-                    consumer.addVertex(pose, minX, y, minZ)
+                    consumer.addVertex(pose, minX, maxY, z)
                             .setColor(255, 255, 255, 255)
                             .setUv(uLeft, vTop)
                             .setOverlay(OverlayTexture.NO_OVERLAY)
                             .setLight(FULL_BRIGHT)
-                            .setNormal(0.0F, 1.0F, 0.0F);
+                            .setNormal(0.0F, 0.0F, -1.0F);
 
-                    consumer.addVertex(pose, maxX, y, minZ)
+                    consumer.addVertex(pose, maxX, maxY, z)
                             .setColor(255, 255, 255, 255)
                             .setUv(uRight, vTop)
                             .setOverlay(OverlayTexture.NO_OVERLAY)
                             .setLight(FULL_BRIGHT)
-                            .setNormal(0.0F, 1.0F, 0.0F);
+                            .setNormal(0.0F, 0.0F, -1.0F);
 
-                    consumer.addVertex(pose, maxX, y, maxZ)
+                    consumer.addVertex(pose, maxX, minY, z)
                             .setColor(255, 255, 255, 255)
                             .setUv(uRight, vBottom)
                             .setOverlay(OverlayTexture.NO_OVERLAY)
                             .setLight(FULL_BRIGHT)
-                            .setNormal(0.0F, 1.0F, 0.0F);
+                            .setNormal(0.0F, 0.0F, -1.0F);
 
-                    consumer.addVertex(pose, minX, y, maxZ)
+                    consumer.addVertex(pose, minX, minY, z)
                             .setColor(255, 255, 255, 255)
                             .setUv(uLeft, vBottom)
                             .setOverlay(OverlayTexture.NO_OVERLAY)
                             .setLight(FULL_BRIGHT)
-                            .setNormal(0.0F, 1.0F, 0.0F);
+                            .setNormal(0.0F, 0.0F, -1.0F);
                 }
         );
     }

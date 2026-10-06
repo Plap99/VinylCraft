@@ -19,6 +19,9 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.Level;
 
 import com.radig.vinylcraft.sound.VinylPlayerAudioBridge;
+import com.radig.vinylcraft.item.VinylData;
+import com.radig.vinylcraft.music.AlbumData;
+import com.radig.vinylcraft.music.ModAlbums;
 
 public class VinylPlayerBlockEntity extends BlockEntity {
 
@@ -135,10 +138,8 @@ public class VinylPlayerBlockEntity extends BlockEntity {
      * duración real de cada canción, podemos sustituir
      * esta constante por la duración del track.
      */
-//     private static final long TONEARM_VISUAL_TRACK_TICKS =
-//             20L * 60L * 4L;
-private static final long TONEARM_VISUAL_TRACK_TICKS =
-        20L * 20L;
+private static final long FALLBACK_ALBUM_TICKS =
+        20L * 60L * 4L;
 
     public VinylPlayerBlockEntity(
             BlockPos pos,
@@ -285,6 +286,104 @@ private static final long TONEARM_VISUAL_TRACK_TICKS =
     }
 
 
+    public void previousTrack() {
+
+        if (!hasVinyl()) {
+            return;
+        }
+
+        long[] durations = getTrackDurationsTicks();
+
+        if (durations.length == 0) {
+            playbackTicks = 0L;
+            setChanged();
+            return;
+        }
+
+        int currentIndex = getTrackIndexAt(playbackTicks, durations);
+        long currentStart = getTrackStartTick(currentIndex, durations);
+        long elapsedInTrack = Math.max(0L, playbackTicks - currentStart);
+
+        /*
+         * Comportamiento típico de reproductor:
+         * - si ya pasaron más de 3 s, reinicia la pista actual;
+         * - al principio de la pista, salta a la anterior.
+         */
+        if (elapsedInTrack > 60L) {
+            playbackTicks = currentStart;
+        } else {
+            int previousIndex = Math.max(0, currentIndex - 1);
+            playbackTicks = getTrackStartTick(previousIndex, durations);
+        }
+
+        setChanged();
+    }
+
+
+    public void nextTrack() {
+
+        if (!hasVinyl()) {
+            return;
+        }
+
+        long[] durations = getTrackDurationsTicks();
+
+        if (durations.length == 0) {
+            return;
+        }
+
+        int currentIndex = getTrackIndexAt(playbackTicks, durations);
+
+        if (currentIndex >= durations.length - 1) {
+            playbackTicks = getTrackStartTick(
+                    durations.length - 1,
+                    durations
+            );
+        } else {
+            playbackTicks = getTrackStartTick(
+                    currentIndex + 1,
+                    durations
+            );
+        }
+
+        setChanged();
+    }
+
+
+    private int getTrackIndexAt(
+            long tick,
+            long[] durations) {
+
+        long accumulated = 0L;
+
+        for (int index = 0; index < durations.length; index++) {
+            long duration = Math.max(1L, durations[index]);
+
+            if (tick < accumulated + duration) {
+                return index;
+            }
+
+            accumulated += duration;
+        }
+
+        return Math.max(0, durations.length - 1);
+    }
+
+
+    private long getTrackStartTick(
+            int trackIndex,
+            long[] durations) {
+
+        long start = 0L;
+
+        for (int index = 0; index < trackIndex && index < durations.length; index++) {
+            start += Math.max(1L, durations[index]);
+        }
+
+        return start;
+    }
+
+
     /*
      * =====================================================
      * GETTERS INTERPOLADOS
@@ -347,6 +446,18 @@ private static final long TONEARM_VISUAL_TRACK_TICKS =
         ) {
 
             blockEntity.playbackTicks++;
+
+            if (!level.isClientSide()) {
+                long albumDuration =
+                        blockEntity.getAlbumDurationTicks();
+
+                if (
+                        albumDuration > 0L
+                                && blockEntity.playbackTicks >= albumDuration
+                ) {
+                    blockEntity.stopPlayback();
+                }
+            }
         }
 
 
@@ -521,9 +632,16 @@ private static final long TONEARM_VISUAL_TRACK_TICKS =
      */
     private float getPlaybackTonearmPosition() {
 
+        long durationTicks =
+                getAlbumDurationTicks();
+
+        if (durationTicks <= 0L) {
+            durationTicks = FALLBACK_ALBUM_TICKS;
+        }
+
         float progress =
                 playbackTicks
-                / (float) TONEARM_VISUAL_TRACK_TICKS;
+                / (float) durationTicks;
 
         progress =
                 clamp01(progress);
@@ -534,6 +652,76 @@ private static final long TONEARM_VISUAL_TRACK_TICKS =
                     - TONEARM_PLAY_POSITION
                 )
                 * progress;
+    }
+
+
+    private long getAlbumDurationTicks() {
+
+        long[] durations = getTrackDurationsTicks();
+
+        if (durations.length > 0) {
+            long total = 0L;
+
+            for (long duration : durations) {
+                total += Math.max(1L, duration);
+            }
+
+            return Math.max(1L, total);
+        }
+
+        if (!hasVinyl()) {
+            return 0L;
+        }
+
+        String albumId =
+                VinylData.getAlbumId(getVinyl());
+
+        AlbumData album =
+                ModAlbums.get(albumId);
+
+        if (album == null || album.isEmpty()) {
+            return 0L;
+        }
+
+        return Math.max(1L, album.totalDurationTicks());
+    }
+
+
+    private long[] getTrackDurationsTicks() {
+
+        if (!hasVinyl()) {
+            return new long[0];
+        }
+
+        long[] fromVinyl =
+                VinylData.getTrackDurationsTicks(
+                        getVinyl()
+                );
+
+        if (fromVinyl.length > 0) {
+            return fromVinyl;
+        }
+
+        String albumId =
+                VinylData.getAlbumId(getVinyl());
+
+        AlbumData album =
+                ModAlbums.get(albumId);
+
+        if (album == null || album.isEmpty()) {
+            return new long[0];
+        }
+
+        long[] result = new long[album.trackCount()];
+
+        for (int index = 0; index < album.trackCount(); index++) {
+            var track = album.getTrack(index);
+            result[index] = track == null
+                    ? 1L
+                    : Math.max(1L, track.durationTicks());
+        }
+
+        return result;
     }
 
 

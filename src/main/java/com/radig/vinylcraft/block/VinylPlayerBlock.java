@@ -200,45 +200,30 @@ public class VinylPlayerBlock
         boolean open = state.getValue(OPEN);
 
         /*
-         * TAPA CERRADA
+         * BOTONES DE TRANSPORTE
          *
-         * Sólo la tapa responde físicamente. El disco y los
-         * controles quedan bloqueados hasta volver a abrirla.
+         * Los botones están en el frente del mueble, fuera de la tapa.
+         * Por eso funcionan tanto con la tapa abierta como cerrada.
+         *
+         * El disco, en cambio, sólo se puede insertar o retirar
+         * cuando la tapa está abierta.
          */
-        if (!open) {
-            if (isClosedLid(localHit)) {
-                if (!level.isClientSide()) {
-                    level.setBlock(
-                            pos,
-                            state.setValue(OPEN, true),
-                            Block.UPDATE_ALL
-                    );
-                }
-
-                return InteractionResult.SUCCESS;
+        if (isPreviousTrackButton(localHit)) {
+            if (!level.isClientSide() && playerEntity.hasVinyl()) {
+                playerEntity.previousTrack();
             }
 
             return InteractionResult.SUCCESS;
         }
 
-        /*
-         * TAPA ABIERTA
-         */
-        if (isOpenLid(localHit)) {
-            if (!level.isClientSide()) {
-                level.setBlock(
-                        pos,
-                        state.setValue(OPEN, false),
-                        Block.UPDATE_ALL
-                );
+        if (isStopButton(localHit)) {
+            if (!level.isClientSide() && playerEntity.hasVinyl()) {
+                playerEntity.stopPlayback();
             }
 
             return InteractionResult.SUCCESS;
         }
 
-        /*
-         * BOTÓN PLAY / PAUSE
-         */
         if (isPlayPauseButton(localHit)) {
             if (!level.isClientSide() && playerEntity.hasVinyl()) {
                 playerEntity.setPlaying(
@@ -249,12 +234,29 @@ public class VinylPlayerBlock
             return InteractionResult.SUCCESS;
         }
 
-        /*
-         * BOTÓN STOP
-         */
-        if (isStopButton(localHit)) {
+        if (isNextTrackButton(localHit)) {
             if (!level.isClientSide() && playerEntity.hasVinyl()) {
-                playerEntity.stopPlayback();
+                playerEntity.nextTrack();
+            }
+
+            return InteractionResult.SUCCESS;
+        }
+
+        /*
+         * TAPA CERRADA
+         *
+         * Los controles frontales ya se atendieron arriba.
+         * Cualquier otro clic únicamente puede abrir la tapa.
+         */
+        if (!open) {
+            if (isClosedLid(localHit)) {
+                if (!level.isClientSide()) {
+                    level.setBlock(
+                            pos,
+                            state.setValue(OPEN, true),
+                            Block.UPDATE_ALL
+                    );
+                }
             }
 
             return InteractionResult.SUCCESS;
@@ -300,6 +302,26 @@ public class VinylPlayerBlock
         }
 
         /*
+         * TAPA ABIERTA
+         *
+         * La comprobación de la tapa va DESPUÉS del plato. El ItemStack
+         * del vinilo sobresale unas décimas por encima del modelo base y,
+         * si comprobamos primero la tapa, un clic sobre el disco puede
+         * terminar interpretándose como clic en la tapa y nunca retirarlo.
+         */
+        if (isOpenLid(localHit)) {
+            if (!level.isClientSide()) {
+                level.setBlock(
+                        pos,
+                        state.setValue(OPEN, false),
+                        Block.UPDATE_ALL
+                );
+            }
+
+            return InteractionResult.SUCCESS;
+        }
+
+        /*
          * Clic sobre madera u otra zona sin control.
          */
         return InteractionResult.SUCCESS;
@@ -332,30 +354,53 @@ public class VinylPlayerBlock
     }
 
     private static boolean isDiscArea(LocalHit hit) {
-        return hit.x >= 2.0D
-                && hit.x <= 11.0D
-                && hit.z >= 2.0D
-                && hit.z <= 11.0D
-                && hit.y >= 4.8D
-                && hit.y <= 6.2D;
+        /*
+         * Un poco más amplia que la geometría del plato para incluir
+         * el ItemStack 3D del vinilo. Esto hace que retirar el disco sea
+         * consistente aunque el rayo golpee la etiqueta o el borde del item.
+         */
+        return hit.x >= 1.70D
+                && hit.x <= 11.60D
+                && hit.z >= 1.70D
+                && hit.z <= 11.60D
+                && hit.y >= 4.55D
+                && hit.y <= 6.90D;
     }
 
-    private static boolean isPlayPauseButton(LocalHit hit) {
-        return hit.x >= 2.75D
-                && hit.x <= 4.5D
-                && hit.z >= 0.6D
-                && hit.z <= 1.6D
-                && hit.y >= 4.7D
-                && hit.y <= 6.2D;
+    private static boolean isPreviousTrackButton(LocalHit hit) {
+        return hit.x >= 11.30D
+                && hit.x <= 13.95D
+                && hit.z >= 0.00D
+                && hit.z <= 1.55D
+                && hit.y >= 1.25D
+                && hit.y <= 3.15D;
     }
 
     private static boolean isStopButton(LocalHit hit) {
-        return hit.x >= 4.75D
-                && hit.x <= 6.5D
-                && hit.z >= 0.6D
-                && hit.z <= 1.6D
-                && hit.y >= 4.7D
-                && hit.y <= 6.2D;
+        return hit.x >= 8.05D
+                && hit.x <= 10.70D
+                && hit.z >= 0.00D
+                && hit.z <= 1.55D
+                && hit.y >= 1.25D
+                && hit.y <= 3.15D;
+    }
+
+    private static boolean isPlayPauseButton(LocalHit hit) {
+        return hit.x >= 4.80D
+                && hit.x <= 7.45D
+                && hit.z >= 0.00D
+                && hit.z <= 1.55D
+                && hit.y >= 1.25D
+                && hit.y <= 3.15D;
+    }
+
+    private static boolean isNextTrackButton(LocalHit hit) {
+        return hit.x >= 1.55D
+                && hit.x <= 4.20D
+                && hit.z >= 0.00D
+                && hit.z <= 1.55D
+                && hit.y >= 1.25D
+                && hit.y <= 3.15D;
     }
 
     /*

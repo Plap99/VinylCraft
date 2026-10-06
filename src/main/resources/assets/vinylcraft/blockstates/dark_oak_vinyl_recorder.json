@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vinylcraft:block/dark_oak_vinyl_recorder"
+    },
+    "facing=east": {
+      "model": "vinylcraft:block/dark_oak_vinyl_recorder",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vinylcraft:block/dark_oak_vinyl_recorder",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vinylcraft:block/dark_oak_vinyl_recorder",
+      "y": 270
+    }
+  }
+}

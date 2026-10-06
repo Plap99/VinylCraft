@@ -1,0 +1,7 @@
+{
+  "parent": "vinylcraft:block/vinyl_recorder",
+  "textures": {
+    "particle": "minecraft:block/acacia_planks",
+    "body": "minecraft:block/acacia_planks"
+  }
+}

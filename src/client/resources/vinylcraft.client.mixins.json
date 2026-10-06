@@ -5,7 +5,8 @@
     "client": [
         "ExampleClientMixin",
         "SoundManagerAccessor",
-        "SoundEngineAccessor"
+        "SoundEngineAccessor",
+        "HudMixin"
     ],
     "injectors": {
         "defaultRequire": 1

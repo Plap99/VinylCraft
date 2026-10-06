@@ -23,6 +23,19 @@ public final class ModDataComponents {
                             .build()
             );
 
+
+    public static final DataComponentType<String> ALBUM_TRACK_DURATIONS =
+            Registry.register(
+                    BuiltInRegistries.DATA_COMPONENT_TYPE,
+                    VinylCraft.id("album_track_durations"),
+                    DataComponentType.<String>builder()
+                            .persistent(Codec.STRING)
+                            .networkSynchronized(
+                                    ByteBufCodecs.STRING_UTF8
+                            )
+                            .build()
+            );
+
     private ModDataComponents() {
     }
 

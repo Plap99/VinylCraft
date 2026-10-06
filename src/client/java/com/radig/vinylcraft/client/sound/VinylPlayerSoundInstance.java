@@ -15,6 +15,9 @@ public class VinylPlayerSoundInstance
 
     private final VinylPlayerBlockEntity playerEntity;
 
+    private float configuredVolume = 1.0F;
+    private boolean pausedByVinyl = false;
+
     public VinylPlayerSoundInstance(
             VinylPlayerBlockEntity playerEntity,
             SoundEvent soundEvent) {
@@ -101,9 +104,22 @@ public class VinylPlayerSoundInstance
      * escaparse un pequeño "blip" de audio.
      */
     public void setPausedVolume(boolean paused) {
-        this.volume = paused
+        this.pausedByVinyl = paused;
+        refreshVolume();
+    }
+
+    public void setConfiguredVolume(float volume) {
+        this.configuredVolume = Math.max(
+                0.0F,
+                Math.min(1.0F, volume)
+        );
+        refreshVolume();
+    }
+
+    private void refreshVolume() {
+        this.volume = pausedByVinyl
                 ? 0.0F
-                : BASE_VOLUME;
+                : BASE_VOLUME * configuredVolume;
     }
 
     public VinylPlayerBlockEntity getPlayerEntity() {

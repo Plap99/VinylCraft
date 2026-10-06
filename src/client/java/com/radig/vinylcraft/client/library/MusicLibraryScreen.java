@@ -31,8 +31,15 @@ public class MusicLibraryScreen extends Screen {
     private AudioMetadata selectedMetadata;
     private AlbumCoverResolver.CoverResult selectedCover;
 
+    private final Screen returnScreen;
+
     public MusicLibraryScreen() {
+        this(null);
+    }
+
+    public MusicLibraryScreen(Screen returnScreen) {
         super(Component.literal("Biblioteca VinylCraft"));
+        this.returnScreen = returnScreen;
     }
 
     @Override
@@ -995,8 +1002,10 @@ public class MusicLibraryScreen extends Screen {
     @Override
     public void onClose() {
 
+        MusicLibraryManager.refresh();
+
         if (this.minecraft != null) {
-            this.minecraft.gui.setScreen(null);
+            this.minecraft.gui.setScreen(returnScreen);
         }
     }
 }

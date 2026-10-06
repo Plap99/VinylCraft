@@ -14,7 +14,6 @@ import net.minecraft.world.item.CreativeModeTabs;
 
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 
-
 public class ModItems {
 
     public static Item register(
@@ -36,14 +35,12 @@ public class ModItems {
         return item;
     }
 
-
     public static final Item BLANK_VINYL =
-        register(
-                ModItemIds.BLANK_VINYL,
-                VinylItem::new,
-                new Item.Properties()
-        );
-
+            register(
+                    ModItemIds.BLANK_VINYL,
+                    VinylItem::new,
+                    new Item.Properties()
+            );
 
     public static void registerModItems() {
 
@@ -51,88 +48,40 @@ public class ModItems {
                 "Registering VinylCraft items..."
         );
 
-
-        /*
-         * =====================================================
-         * INGREDIENTES
-         * =====================================================
-         */
-
         CreativeModeTabEvents
-                .modifyOutputEvent(
-                        CreativeModeTabs.INGREDIENTS
-                )
-                .register(
-                        creativeTab ->
-                                creativeTab.accept(
-                                        BLANK_VINYL
-                                )
+                .modifyOutputEvent(CreativeModeTabs.INGREDIENTS)
+                .register(creativeTab ->
+                        creativeTab.accept(BLANK_VINYL)
                 );
 
-
-        /*
-         * =====================================================
-         * BLOQUES FUNCIONALES
-         * =====================================================
-         *
-         * Aquí añadimos todas las variantes
-         * del Vinyl Player al inventario creativo.
-         * =====================================================
-         */
-
         CreativeModeTabEvents
-                .modifyOutputEvent(
-                        CreativeModeTabs.FUNCTIONAL_BLOCKS
-                )
+                .modifyOutputEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS)
                 .register(creativeTab -> {
+                    creativeTab.accept(ModBlocks.OAK_VINYL_PLAYER);
+                    creativeTab.accept(ModBlocks.SPRUCE_VINYL_PLAYER);
+                    creativeTab.accept(ModBlocks.BIRCH_VINYL_PLAYER);
+                    creativeTab.accept(ModBlocks.JUNGLE_VINYL_PLAYER);
+                    creativeTab.accept(ModBlocks.ACACIA_VINYL_PLAYER);
+                    creativeTab.accept(ModBlocks.DARK_OAK_VINYL_PLAYER);
+                    creativeTab.accept(ModBlocks.MANGROVE_VINYL_PLAYER);
+                    creativeTab.accept(ModBlocks.CHERRY_VINYL_PLAYER);
+                    creativeTab.accept(ModBlocks.PALE_OAK_VINYL_PLAYER);
+                    creativeTab.accept(ModBlocks.BAMBOO_VINYL_PLAYER);
+                    creativeTab.accept(ModBlocks.CRIMSON_VINYL_PLAYER);
+                    creativeTab.accept(ModBlocks.WARPED_VINYL_PLAYER);
 
-                    creativeTab.accept(
-                            ModBlocks.OAK_VINYL_PLAYER
-                    );
-
-                    creativeTab.accept(
-                            ModBlocks.SPRUCE_VINYL_PLAYER
-                    );
-
-                    creativeTab.accept(
-                            ModBlocks.BIRCH_VINYL_PLAYER
-                    );
-
-                    creativeTab.accept(
-                            ModBlocks.JUNGLE_VINYL_PLAYER
-                    );
-
-                    creativeTab.accept(
-                            ModBlocks.ACACIA_VINYL_PLAYER
-                    );
-
-                    creativeTab.accept(
-                            ModBlocks.DARK_OAK_VINYL_PLAYER
-                    );
-
-                    creativeTab.accept(
-                            ModBlocks.MANGROVE_VINYL_PLAYER
-                    );
-
-                    creativeTab.accept(
-                            ModBlocks.CHERRY_VINYL_PLAYER
-                    );
-
-                    creativeTab.accept(
-                            ModBlocks.PALE_OAK_VINYL_PLAYER
-                    );
-
-                    creativeTab.accept(
-                            ModBlocks.BAMBOO_VINYL_PLAYER
-                    );
-
-                    creativeTab.accept(
-                            ModBlocks.CRIMSON_VINYL_PLAYER
-                    );
-
-                    creativeTab.accept(
-                            ModBlocks.WARPED_VINYL_PLAYER
-                    );
+                    creativeTab.accept(ModBlocks.OAK_VINYL_RECORDER);
+                    creativeTab.accept(ModBlocks.SPRUCE_VINYL_RECORDER);
+                    creativeTab.accept(ModBlocks.BIRCH_VINYL_RECORDER);
+                    creativeTab.accept(ModBlocks.JUNGLE_VINYL_RECORDER);
+                    creativeTab.accept(ModBlocks.ACACIA_VINYL_RECORDER);
+                    creativeTab.accept(ModBlocks.DARK_OAK_VINYL_RECORDER);
+                    creativeTab.accept(ModBlocks.MANGROVE_VINYL_RECORDER);
+                    creativeTab.accept(ModBlocks.CHERRY_VINYL_RECORDER);
+                    creativeTab.accept(ModBlocks.PALE_OAK_VINYL_RECORDER);
+                    creativeTab.accept(ModBlocks.BAMBOO_VINYL_RECORDER);
+                    creativeTab.accept(ModBlocks.CRIMSON_VINYL_RECORDER);
+                    creativeTab.accept(ModBlocks.WARPED_VINYL_RECORDER);
                 });
     }
 }

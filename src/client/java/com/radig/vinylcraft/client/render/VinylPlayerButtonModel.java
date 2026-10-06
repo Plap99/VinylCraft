@@ -7,42 +7,94 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 
-/** Dynamic front buttons. Rendered full-bright by the block entity renderer. */
+/**
+ * Controles físicos del Vinyl Player.
+ *
+ * Paso 6: se movieron del borde superior al panel frontal y se hicieron
+ * más grandes para que sean fáciles de ver y de pulsar.
+ *
+ * Orden: anterior · stop · play/pausa · siguiente.
+ */
 public class VinylPlayerButtonModel {
+
+    public static final float Y = 1.55F;
+    public static final float Z = 0.48F;
+    public static final float WIDTH = 2.25F;
+    public static final float HEIGHT = 1.25F;
+    public static final float DEPTH = 0.58F;
+
+    public static final float PREVIOUS_X = 11.50F;
+    public static final float STOP_X = 8.25F;
+    public static final float PLAY_X = 5.00F;
+    public static final float NEXT_X = 1.75F;
+
+    public static final float ICON_Y = Y + HEIGHT / 2.0F;
+    public static final float ICON_Z = Z - 0.07F;
 
     public static LayerDefinition createLayer() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
 
-        root.addOrReplaceChild(
-                "play_pause",
-                CubeListBuilder.create()
-                        .texOffs(0, 0)
-                        .addBox(3.0F, 5.05F, 0.85F, 1.25F, 0.40F, 0.50F),
-                PartPose.ZERO
-        );
+        addButton(root, "previous", PREVIOUS_X);
+        addButton(root, "stop", STOP_X);
+        addButton(root, "play_pause", PLAY_X);
+        addButton(root, "next", NEXT_X);
 
-        root.addOrReplaceChild(
-                "stop",
-                CubeListBuilder.create()
-                        .texOffs(0, 0)
-                        .addBox(5.0F, 5.05F, 0.85F, 1.25F, 0.40F, 0.50F),
-                PartPose.ZERO
-        );
-
-        // Logical UV size deliberately kept small so the tiny physical buttons
-        // use most of each 16x16 sprite instead of sampling only a few pixels.
-        return LayerDefinition.create(mesh, 2, 2);
+        /*
+         * 16x16 evita que las UV de las caras laterales del cubo salgan
+         * del sprite del botón y muestreen píxeles vecinos del atlas.
+         * Ese desbordamiento era el origen más probable del pequeño
+         * cuadrito fantasma que aparecía en una esquina de cada control.
+         */
+        return LayerDefinition.create(mesh, 16, 16);
     }
 
-    private final ModelPart playPause;
+    private static void addButton(
+            PartDefinition root,
+            String name,
+            float x) {
+
+        root.addOrReplaceChild(
+                name,
+                CubeListBuilder.create()
+                        .texOffs(0, 0)
+                        .addBox(
+                                x,
+                                Y,
+                                Z,
+                                WIDTH,
+                                HEIGHT,
+                                DEPTH
+                        ),
+                PartPose.ZERO
+        );
+    }
+
+    private final ModelPart previous;
     private final ModelPart stop;
+    private final ModelPart playPause;
+    private final ModelPart next;
 
     public VinylPlayerButtonModel(ModelPart root) {
-        this.playPause = root.getChild("play_pause");
+        this.previous = root.getChild("previous");
         this.stop = root.getChild("stop");
+        this.playPause = root.getChild("play_pause");
+        this.next = root.getChild("next");
     }
 
-    public ModelPart playPause() { return playPause; }
-    public ModelPart stop() { return stop; }
+    public ModelPart previous() {
+        return previous;
+    }
+
+    public ModelPart stop() {
+        return stop;
+    }
+
+    public ModelPart playPause() {
+        return playPause;
+    }
+
+    public ModelPart next() {
+        return next;
+    }
 }

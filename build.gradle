@@ -4,6 +4,7 @@ plugins {
 }
 
 repositories {
+	mavenCentral()
 	// Add repositories to retrieve artifacts from in here.
 	// You should only use this when depending on other mods because
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
@@ -31,6 +32,8 @@ dependencies {
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
 	implementation "net.jthink:jaudiotagger:3.0.1"
+	implementation "javazoom:jlayer:1.0.1"
+	include "javazoom:jlayer:1.0.1"
 	implementation "org.lwjgl:lwjgl-nfd:3.4.1"
 	runtimeOnly "org.lwjgl:lwjgl-nfd:3.4.1:natives-windows"
 }

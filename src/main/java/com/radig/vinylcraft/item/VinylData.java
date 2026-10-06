@@ -55,6 +55,72 @@ public final class VinylData {
     }
 
 
+    public static String getTrackDurationsEncoded(
+            ItemStack stack) {
+
+        if (stack == null || stack.isEmpty()) {
+            return null;
+        }
+
+        return stack.get(
+                ModDataComponents.ALBUM_TRACK_DURATIONS
+        );
+    }
+
+
+    public static void setTrackDurationsEncoded(
+            ItemStack stack,
+            String encoded) {
+
+        if (
+                stack == null
+                        || stack.isEmpty()
+                        || encoded == null
+                        || encoded.isBlank()
+        ) {
+            return;
+        }
+
+        stack.set(
+                ModDataComponents.ALBUM_TRACK_DURATIONS,
+                encoded
+        );
+    }
+
+
+    public static long[] getTrackDurationsTicks(
+            ItemStack stack) {
+
+        String encoded = getTrackDurationsEncoded(stack);
+
+        if (encoded == null || encoded.isBlank()) {
+            return new long[0];
+        }
+
+        String[] parts = encoded.split(",");
+        long[] result = new long[parts.length];
+
+        int count = 0;
+
+        for (String part : parts) {
+            try {
+                long value = Long.parseLong(part.trim());
+
+                if (value > 0L) {
+                    result[count++] = value;
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        if (count == result.length) {
+            return result;
+        }
+
+        return java.util.Arrays.copyOf(result, count);
+    }
+
+
     public static void clearAlbum(
             ItemStack stack) {
 
@@ -64,6 +130,10 @@ public final class VinylData {
 
         stack.remove(
                 ModDataComponents.ALBUM_ID
+        );
+
+        stack.remove(
+                ModDataComponents.ALBUM_TRACK_DURATIONS
         );
     }
 }

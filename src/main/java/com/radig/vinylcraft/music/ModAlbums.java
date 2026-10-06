@@ -1,8 +1,8 @@
 package com.radig.vinylcraft.music;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class ModAlbums {
 
@@ -41,7 +41,7 @@ public final class ModAlbums {
      */
 
     private static final Map<String, AlbumData> ALBUMS =
-            new LinkedHashMap<>();
+            new ConcurrentHashMap<>();
 
 
     static {
@@ -54,7 +54,7 @@ public final class ModAlbums {
     }
 
 
-    private static void register(
+    public static void register(
             AlbumData album) {
 
         if (album == null) {

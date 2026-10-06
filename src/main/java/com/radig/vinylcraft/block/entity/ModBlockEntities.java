@@ -13,28 +13,11 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
-
 public class ModBlockEntities {
 
     /*
      * =====================================================
      * VINYL PLAYER
-     * =====================================================
-     *
-     * Todas las variantes de madera comparten exactamente
-     * el mismo BlockEntity.
-     *
-     * Por lo tanto:
-     *
-     * - inventario
-     * - vinilo
-     * - PLAY
-     * - PAUSE
-     * - STOP
-     * - playbackTicks
-     * - animación del brazo
-     *
-     * funcionan igual independientemente de la madera.
      * =====================================================
      */
 
@@ -58,6 +41,31 @@ public class ModBlockEntities {
                     ModBlocks.WARPED_VINYL_PLAYER
             );
 
+    /*
+     * =====================================================
+     * VINYL RECORDER
+     * =====================================================
+     */
+
+    public static final BlockEntityType<VinylRecorderBlockEntity>
+            VINYL_RECORDER =
+            register(
+                    "vinyl_recorder",
+                    VinylRecorderBlockEntity::new,
+
+                    ModBlocks.OAK_VINYL_RECORDER,
+                    ModBlocks.SPRUCE_VINYL_RECORDER,
+                    ModBlocks.BIRCH_VINYL_RECORDER,
+                    ModBlocks.JUNGLE_VINYL_RECORDER,
+                    ModBlocks.ACACIA_VINYL_RECORDER,
+                    ModBlocks.DARK_OAK_VINYL_RECORDER,
+                    ModBlocks.MANGROVE_VINYL_RECORDER,
+                    ModBlocks.CHERRY_VINYL_RECORDER,
+                    ModBlocks.PALE_OAK_VINYL_RECORDER,
+                    ModBlocks.BAMBOO_VINYL_RECORDER,
+                    ModBlocks.CRIMSON_VINYL_RECORDER,
+                    ModBlocks.WARPED_VINYL_RECORDER
+            );
 
     private static <T extends BlockEntity>
             BlockEntityType<T> register(
@@ -76,7 +84,6 @@ public class ModBlockEntities {
                         .build()
         );
     }
-
 
     public static void registerModBlockEntities() {
 
