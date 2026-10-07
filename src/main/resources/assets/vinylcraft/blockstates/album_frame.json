@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "vinylcraft:block/album_frame" },
+    "facing=east":  { "model": "vinylcraft:block/album_frame" },
+    "facing=south": { "model": "vinylcraft:block/album_frame" },
+    "facing=west":  { "model": "vinylcraft:block/album_frame" }
+  }
+}

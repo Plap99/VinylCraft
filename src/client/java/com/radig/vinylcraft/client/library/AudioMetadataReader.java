@@ -30,27 +30,36 @@ public final class AudioMetadataReader {
                     audioFile.getTag();
 
             String title =
-                    getValue(
-                            tag,
-                            FieldKey.TITLE
+                    MetadataTextSanitizer.titleOrFileName(
+                            getValue(
+                                    tag,
+                                    FieldKey.TITLE
+                            ),
+                            path
                     );
 
             String artist =
-                    getValue(
-                            tag,
-                            FieldKey.ARTIST
+                    MetadataTextSanitizer.clean(
+                            getValue(
+                                    tag,
+                                    FieldKey.ARTIST
+                            )
                     );
 
             String album =
-                    getValue(
-                            tag,
-                            FieldKey.ALBUM
+                    MetadataTextSanitizer.clean(
+                            getValue(
+                                    tag,
+                                    FieldKey.ALBUM
+                            )
                     );
 
             String albumArtist =
-                    getValue(
-                            tag,
-                            FieldKey.ALBUM_ARTIST
+                    MetadataTextSanitizer.clean(
+                            getValue(
+                                    tag,
+                                    FieldKey.ALBUM_ARTIST
+                            )
                     );
 
             int trackNumber =

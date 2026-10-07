@@ -121,6 +121,31 @@ public final class VinylData {
     }
 
 
+
+
+    public static int getWallSize(ItemStack stack) {
+
+        if (stack == null || stack.isEmpty()) {
+            return 1;
+        }
+
+        Integer size = stack.get(ModDataComponents.ALBUM_WALL_SIZE);
+        return size == null ? 1 : Math.max(1, Math.min(10, size));
+    }
+
+
+    public static void setWallSize(ItemStack stack, int size) {
+
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+
+        stack.set(
+                ModDataComponents.ALBUM_WALL_SIZE,
+                Math.max(1, Math.min(10, size))
+        );
+    }
+
     public static void clearAlbum(
             ItemStack stack) {
 
@@ -134,6 +159,10 @@ public final class VinylData {
 
         stack.remove(
                 ModDataComponents.ALBUM_TRACK_DURATIONS
+        );
+
+        stack.remove(
+                ModDataComponents.ALBUM_WALL_SIZE
         );
     }
 }

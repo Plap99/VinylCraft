@@ -91,6 +91,10 @@ public class ModBlockItemIds {
     public static final BlockItemId WARPED_VINYL_RECORDER =
             create("warped_vinyl_recorder");
 
+    /* Bloque interno usado por las portadas murales. No registra BlockItem. */
+    public static final BlockItemId ALBUM_FRAME =
+            create("album_frame");
+
     private static BlockItemId create(String name) {
 
         Identifier id =

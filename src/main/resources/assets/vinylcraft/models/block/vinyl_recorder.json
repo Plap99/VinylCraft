@@ -7,7 +7,9 @@
     "metal": "minecraft:block/iron_block",
     "dark_metal": "minecraft:block/polished_blackstone",
     "button": "minecraft:block/smooth_stone",
-    "rec_button": "vinylcraft:block/vinyl_recorder_rec_button"
+    "rec_button": "vinylcraft:block/vinyl_recorder_rec_button",
+    "info_button": "vinylcraft:block/vinyl_recorder_info_button",
+    "rec_slot": "vinylcraft:block/vinyl_recorder_indicator_slot"
   },
   "elements": [
     {
@@ -352,19 +354,133 @@
           ]
         },
         "east": {
-          "texture": "minecraft:block/red_concrete"
+          "texture": "#dark_metal"
         },
         "south": {
-          "texture": "minecraft:block/red_concrete"
+          "texture": "#dark_metal"
         },
         "west": {
-          "texture": "minecraft:block/red_concrete"
+          "texture": "#dark_metal"
         },
         "up": {
-          "texture": "minecraft:block/red_concrete"
+          "texture": "#dark_metal"
         },
         "down": {
-          "texture": "minecraft:block/red_concrete"
+          "texture": "#dark_metal"
+        }
+      }
+    },
+    {
+      "from": [
+        7.1,
+        5.8,
+        0.35
+      ],
+      "to": [
+        8.9,
+        7.6,
+        1.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#rec_slot",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#dark_metal"
+        },
+        "east": {
+          "texture": "#dark_metal"
+        },
+        "west": {
+          "texture": "#dark_metal"
+        },
+        "up": {
+          "texture": "#dark_metal"
+        },
+        "down": {
+          "texture": "#dark_metal"
+        }
+      }
+    },
+    {
+      "from": [
+        7.35,
+        6.05,
+        0.28
+      ],
+      "to": [
+        8.65,
+        7.35,
+        0.36
+      ],
+      "faces": {
+        "north": {
+          "texture": "#rec_slot",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#dark_metal"
+        },
+        "east": {
+          "texture": "#dark_metal"
+        },
+        "west": {
+          "texture": "#dark_metal"
+        },
+        "up": {
+          "texture": "#dark_metal"
+        },
+        "down": {
+          "texture": "#dark_metal"
+        }
+      }
+    },
+    {
+      "from": [
+        11.15,
+        5.75,
+        0.38
+      ],
+      "to": [
+        13.75,
+        7.65,
+        1.3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#info_button",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#dark_metal"
+        },
+        "east": {
+          "texture": "#dark_metal"
+        },
+        "west": {
+          "texture": "#dark_metal"
+        },
+        "up": {
+          "texture": "#dark_metal"
+        },
+        "down": {
+          "texture": "#dark_metal"
         }
       }
     }

@@ -2,6 +2,9 @@ package com.radig.vinylcraft.client.recorder;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.ArrayList;
+import com.radig.vinylcraft.client.sound.LocalAudioStreamFactory;
+import net.minecraft.client.input.MouseButtonEvent;
 
 import com.radig.vinylcraft.client.library.AudioMetadata;
 import com.radig.vinylcraft.client.library.AudioMetadataCache;
@@ -37,6 +40,10 @@ public class VinylRecorderScreen extends Screen {
     private Button addTrackButton;
     private Button removeTrackButton;
     private Button nextButton;
+    private Button addFolderButton;
+    private Button moveUpButton;
+    private Button moveDownButton;
+    private int selectedTrackIndex = -1;
 
     private int trackScroll = 0;
 
@@ -68,6 +75,8 @@ public class VinylRecorderScreen extends Screen {
 
         this.addRenderableWidget(treeWidget);
 
+        draft.restoreTreeState(treeWidget);
+
         treeWidget.setSelectionChangedListener(
                 this::updateButtons
         );
@@ -85,7 +94,7 @@ public class VinylRecorderScreen extends Screen {
                         CONTENT_TOP,
                         buttonWidth,
                         20,
-                        Component.literal("+ Añadir"),
+                        Component.literal("+ Pista"),
                         button -> addSelectedTrack(),
                         RecorderColorButton.Theme.GREEN
                 )
@@ -98,7 +107,7 @@ public class VinylRecorderScreen extends Screen {
                         buttonWidth,
                         20,
                         Component.literal("- Quitar"),
-                        button -> removeLastTrack(),
+                        button -> removeSelectedTrack(),
                         RecorderColorButton.Theme.RED
                 )
         );
@@ -115,6 +124,23 @@ public class VinylRecorderScreen extends Screen {
                         20
                 )
                 .build()
+        );
+
+        // Segunda fila: carpeta completa y orden manual de pistas.
+        addFolderButton = this.addRenderableWidget(
+                new RecorderColorButton(rowX, CONTENT_TOP + 24,
+                        buttonWidth, 20, Component.literal("+ Carpeta"),
+                        button -> addSelectedFolder(), RecorderColorButton.Theme.GREEN)
+        );
+        moveUpButton = this.addRenderableWidget(
+                Button.builder(Component.literal("↑ Subir"), button -> moveSelectedTrack(-1))
+                        .bounds(rowX + buttonWidth + buttonGap, CONTENT_TOP + 24,
+                                buttonWidth, 20).build()
+        );
+        moveDownButton = this.addRenderableWidget(
+                Button.builder(Component.literal("↓ Bajar"), button -> moveSelectedTrack(1))
+                        .bounds(rowX + (buttonWidth + buttonGap) * 2, CONTENT_TOP + 24,
+                                buttonWidth, 20).build()
         );
 
         int bottomY = this.height - 30;
@@ -167,6 +193,8 @@ public class VinylRecorderScreen extends Screen {
             return;
         }
 
+        draft.captureTreeState(treeWidget);
+
         if (this.minecraft != null) {
             this.minecraft.gui.setScreen(
                     new VinylRecorderCoverScreen(draft)
@@ -183,7 +211,8 @@ public class VinylRecorderScreen extends Screen {
         MusicLibraryEntry entry =
                 treeWidget.getSelectedEntry();
 
-        if (entry == null || !entry.isAudioFile()) {
+        if (entry == null || !entry.isAudioFile()
+                || !LocalAudioStreamFactory.supports(entry.path())) {
             return;
         }
 
@@ -197,25 +226,81 @@ public class VinylRecorderScreen extends Screen {
 
         if (!alreadyAdded) {
             draft.selectedTracks().add(entry);
-            trackScroll = Math.max(0, draft.selectedTracks().size() - 1);
+            selectedTrackIndex = draft.selectedTracks().size() - 1;
+            ensureSelectedVisible();
         }
 
         updateButtons();
     }
 
-    private void removeLastTrack() {
-        List<MusicLibraryEntry> tracks = draft.selectedTracks();
-
-        if (!tracks.isEmpty()) {
-            tracks.remove(tracks.size() - 1);
+    private void addSelectedFolder() {
+        MusicLibraryEntry folder = treeWidget == null ? null : treeWidget.getSelectedEntry();
+        if (folder == null || !folder.isFolder()) return;
+        addFolderEntries(folder, draft.selectedTracks());
+        if (!draft.selectedTracks().isEmpty()) {
+            selectedTrackIndex = draft.selectedTracks().size() - 1;
+            ensureSelectedVisible();
         }
-
-        trackScroll = Math.min(
-                trackScroll,
-                Math.max(0, tracks.size() - 1)
-        );
-
         updateButtons();
+    }
+
+    private void addFolderEntries(MusicLibraryEntry folder, List<MusicLibraryEntry> tracks) {
+        for (MusicLibraryEntry child : folder.children()) {
+            if (child.isFolder()) {
+                addFolderEntries(child, tracks); // Respeta orden natural y subcarpetas.
+            } else if (child.isAudioFile()
+                    && LocalAudioStreamFactory.supports(child.path())
+                    && tracks.stream().noneMatch(existing ->
+                            existing.path().toAbsolutePath().normalize().equals(
+                                    child.path().toAbsolutePath().normalize()))) {
+                tracks.add(child);
+            }
+        }
+    }
+
+    private void removeSelectedTrack() {
+        List<MusicLibraryEntry> tracks = draft.selectedTracks();
+        if (selectedTrackIndex < 0 || selectedTrackIndex >= tracks.size()) return;
+        tracks.remove(selectedTrackIndex);
+        selectedTrackIndex = tracks.isEmpty() ? -1 : Math.min(selectedTrackIndex, tracks.size() - 1);
+        ensureSelectedVisible();
+        updateButtons();
+    }
+
+    private void moveSelectedTrack(int direction) {
+        List<MusicLibraryEntry> tracks = draft.selectedTracks();
+        int to = selectedTrackIndex + direction;
+        if (selectedTrackIndex < 0 || to < 0 || to >= tracks.size()) return;
+        java.util.Collections.swap(tracks, selectedTrackIndex, to);
+        selectedTrackIndex = to;
+        ensureSelectedVisible();
+        updateButtons();
+    }
+
+    private void ensureSelectedVisible() {
+        int visible = getVisibleTrackRows(getLayout());
+        if (selectedTrackIndex < trackScroll) trackScroll = selectedTrackIndex;
+        if (selectedTrackIndex >= trackScroll + visible) {
+            trackScroll = selectedTrackIndex - visible + 1;
+        }
+        trackScroll = Math.max(0, trackScroll);
+    }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        Layout layout = getLayout();
+        double x = event.x();
+        double y = event.y();
+        if (x >= layout.trackAreaX() && x < layout.trackAreaX() + layout.trackAreaWidth()
+                && y >= layout.trackListTop() && y < layout.trackListBottom()) {
+            int index = trackScroll + (int) ((y - layout.trackListTop()) / ROW_HEIGHT);
+            if (index >= 0 && index < draft.selectedTracks().size()) {
+                selectedTrackIndex = index;
+                updateButtons();
+            }
+            return true;
+        }
+        return super.mouseClicked(event, doubleClick);
     }
 
     private void updateButtons() {
@@ -228,13 +313,21 @@ public class VinylRecorderScreen extends Screen {
         if (addTrackButton != null) {
             addTrackButton.active =
                     entry != null
-                            && entry.isAudioFile();
+                            && entry.isAudioFile()
+                            && LocalAudioStreamFactory.supports(entry.path());
         }
 
         if (removeTrackButton != null) {
-            removeTrackButton.active = !draft.selectedTracks().isEmpty();
+            removeTrackButton.active = selectedTrackIndex >= 0
+                    && selectedTrackIndex < draft.selectedTracks().size();
         }
 
+        if (addFolderButton != null) {
+            addFolderButton.active = entry != null && entry.isFolder();
+        }
+        if (moveUpButton != null) moveUpButton.active = selectedTrackIndex > 0;
+        if (moveDownButton != null) moveDownButton.active = selectedTrackIndex >= 0
+                && selectedTrackIndex < draft.selectedTracks().size() - 1;
         if (nextButton != null) {
             nextButton.active = !draft.selectedTracks().isEmpty();
         }
@@ -383,12 +476,16 @@ public class VinylRecorderScreen extends Screen {
                     Math.max(20, maxWidth - 8)
             );
 
+            if (index == selectedTrackIndex) {
+                graphics.fill(x - 3, y - 2,
+                        x + maxWidth - 3, y + ROW_HEIGHT - 2, 0x88446677);
+            }
             graphics.text(
                     this.font,
                     line,
                     x,
                     y,
-                    0xFFFFFFFF,
+                    index == selectedTrackIndex ? 0xFFFFFF55 : 0xFFFFFFFF,
                     false
             );
 
@@ -460,7 +557,7 @@ public class VinylRecorderScreen extends Screen {
         int panelX = contentX + treeWidth + PANEL_GAP;
         int panelWidth = contentWidth - treeWidth - PANEL_GAP;
         int contentBottom = this.height - BOTTOM_MARGIN;
-        int panelTop = CONTENT_TOP + 28;
+        int panelTop = CONTENT_TOP + 53;
 
         int innerPadding = 10;
         int trackAreaX = panelX + innerPadding;

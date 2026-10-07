@@ -18,6 +18,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.radig.vinylcraft.VinylCraft;
+import com.radig.vinylcraft.client.library.MetadataTextSanitizer;
 import com.radig.vinylcraft.music.AlbumData;
 import com.radig.vinylcraft.music.ModAlbums;
 import com.radig.vinylcraft.music.TrackData;
@@ -195,8 +196,8 @@ public final class RecordedAlbumStore {
     private static AlbumData parseAlbum(JsonObject object) {
 
         String id = getString(object, "id");
-        String title = getString(object, "title");
-        String artist = getString(object, "artist");
+        String title = MetadataTextSanitizer.clean(getString(object, "title"));
+        String artist = MetadataTextSanitizer.clean(getString(object, "artist"));
         String coverFile = getString(object, "coverFile");
 
         if (id.isBlank()) {
@@ -217,6 +218,15 @@ public final class RecordedAlbumStore {
                 String trackId = getString(trackObject, "id");
                 String trackTitle = getString(trackObject, "title");
                 String audioFile = getString(trackObject, "audioFile");
+
+                try {
+                    trackTitle = MetadataTextSanitizer.titleOrFileName(
+                            trackTitle,
+                            audioFile.isBlank() ? null : Path.of(audioFile)
+                    );
+                } catch (Exception ignored) {
+                    trackTitle = MetadataTextSanitizer.clean(trackTitle);
+                }
                 long durationMillis = getLong(trackObject, "durationMillis");
 
                 if (audioFile.isBlank()) {

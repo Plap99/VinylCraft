@@ -6,7 +6,8 @@
         "ExampleClientMixin",
         "SoundManagerAccessor",
         "SoundEngineAccessor",
-        "HudMixin"
+        "HudMixin",
+        "VinylCoverItemMixin"
     ],
     "injectors": {
         "defaultRequire": 1

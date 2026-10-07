@@ -42,7 +42,7 @@ public class VinylRecorderBlockEntityRenderer
     private final ItemModelResolver itemModelResolver;
     private final VinylRecorderTonearmModel tonearmModel;
     private final TextureAtlasSprite tonearmSprite;
-    private final TextureAtlasSprite recLightSprite;
+    private final TextureAtlasSprite indicatorSprite;
 
     public VinylRecorderBlockEntityRenderer(
             BlockEntityRendererProvider.Context context) {
@@ -67,12 +67,17 @@ public class VinylRecorderBlockEntityRenderer
                 )
         );
 
-        this.recLightSprite = context.sprites().get(
+        /*
+         * Usamos un sprite vanilla seguro y lo teñimos por vértice.
+         * Así el piloto REC nunca depende de que una textura propia
+         * haya sido cosida al atlas y evitamos el checker rosa/negro.
+         */
+        this.indicatorSprite = context.sprites().get(
                 new SpriteId(
                         blockAtlas,
                         Identifier.fromNamespaceAndPath(
-                                "vinylcraft",
-                                "block/vinyl_recorder_rec_light"
+                                "minecraft",
+                                "block/white_concrete"
                         )
                 )
         );
@@ -205,7 +210,7 @@ public class VinylRecorderBlockEntityRenderer
                     1.0F + (state.recPulse - 0.65F) * 0.10F;
 
             float lightSize =
-                    (1.70F * pulseScale) / 16.0F;
+                    (0.92F * pulseScale) / 16.0F;
 
             int alpha =
                     Math.max(
@@ -219,14 +224,18 @@ public class VinylRecorderBlockEntityRenderer
             submitFrontQuad(
                     queue,
                     matrices,
-                    recLightSprite,
-                    12.45F / 16.0F,
+                    indicatorSprite,
+                    8.0F / 16.0F,
                     6.70F / 16.0F,
-                    0.90F / 16.0F,
+                    0.18F / 16.0F,
                     lightSize,
                     lightSize,
                     FULL_BRIGHT,
-                    alpha
+                    alpha,
+                    255,
+                    28,
+                    28,
+                    true
             );
         }
 
@@ -267,7 +276,11 @@ public class VinylRecorderBlockEntityRenderer
             float width,
             float height,
             int light,
-            int alpha) {
+            int alpha,
+            int red,
+            int green,
+            int blue,
+            boolean emissive) {
 
         float minX = centerX - width / 2.0F;
         float maxX = centerX + width / 2.0F;
@@ -276,34 +289,38 @@ public class VinylRecorderBlockEntityRenderer
 
         queue.submitCustomGeometry(
                 matrices,
-                RenderTypes.entityTranslucentEmissive(
-                        sprite.atlasLocation()
-                ),
+                emissive
+                        ? RenderTypes.entityTranslucentEmissive(
+                                sprite.atlasLocation()
+                        )
+                        : RenderTypes.entityTranslucent(
+                                sprite.atlasLocation()
+                        ),
                 (pose, consumer) -> {
 
                     consumer.addVertex(pose, minX, maxY, z)
-                            .setColor(255, 255, 255, alpha)
+                            .setColor(red, green, blue, alpha)
                             .setUv(sprite.getU0(), sprite.getV0())
                             .setOverlay(OverlayTexture.NO_OVERLAY)
                             .setLight(light)
                             .setNormal(0.0F, 0.0F, -1.0F);
 
                     consumer.addVertex(pose, maxX, maxY, z)
-                            .setColor(255, 255, 255, alpha)
+                            .setColor(red, green, blue, alpha)
                             .setUv(sprite.getU1(), sprite.getV0())
                             .setOverlay(OverlayTexture.NO_OVERLAY)
                             .setLight(light)
                             .setNormal(0.0F, 0.0F, -1.0F);
 
                     consumer.addVertex(pose, maxX, minY, z)
-                            .setColor(255, 255, 255, alpha)
+                            .setColor(red, green, blue, alpha)
                             .setUv(sprite.getU1(), sprite.getV1())
                             .setOverlay(OverlayTexture.NO_OVERLAY)
                             .setLight(light)
                             .setNormal(0.0F, 0.0F, -1.0F);
 
                     consumer.addVertex(pose, minX, minY, z)
-                            .setColor(255, 255, 255, alpha)
+                            .setColor(red, green, blue, alpha)
                             .setUv(sprite.getU0(), sprite.getV1())
                             .setOverlay(OverlayTexture.NO_OVERLAY)
                             .setLight(light)

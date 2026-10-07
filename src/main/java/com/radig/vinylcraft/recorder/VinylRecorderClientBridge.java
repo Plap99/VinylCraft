@@ -9,6 +9,16 @@ public final class VinylRecorderClientBridge {
     private static Consumer<BlockPos> openScreenHandler =
             pos -> { };
 
+    private static Consumer<BlockPos> openInfoHandler = pos -> { };
+
+    public static void setOpenAlbumInfoHandler(Consumer<BlockPos> handler) {
+        openInfoHandler = handler == null ? pos -> { } : handler;
+    }
+
+    public static void openAlbumInfoScreen(BlockPos pos) {
+        openInfoHandler.accept(pos);
+    }
+
     private VinylRecorderClientBridge() {
     }
 

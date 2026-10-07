@@ -1,6 +1,28 @@
 {
   "model": {
-    "type": "minecraft:model",
-    "model": "vinylcraft:item/blank_vinyl"
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": "gui",
+        "model": {
+          "type": "minecraft:condition",
+          "property": "minecraft:has_component",
+          "component": "vinylcraft:album_id",
+          "on_true": {
+            "type": "minecraft:model",
+            "model": "vinylcraft:item/recorded_vinyl_sleeve"
+          },
+          "on_false": {
+            "type": "minecraft:model",
+            "model": "vinylcraft:item/blank_vinyl"
+          }
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "vinylcraft:item/blank_vinyl"
+    }
   }
 }

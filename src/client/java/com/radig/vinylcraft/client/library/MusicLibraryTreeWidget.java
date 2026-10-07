@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import com.radig.vinylcraft.client.sound.LocalAudioStreamFactory;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -327,6 +328,10 @@ public class MusicLibraryTreeWidget
                         : 0xFFFFFFFF;
 
 
+        if (entry.isAudioFile() && !LocalAudioStreamFactory.supports(entry.path())) {
+            color = 0xFF777777; // Formato reconocido pero sin decodificador disponible.
+        }
+
         var font =
                 net.minecraft.client.Minecraft
                         .getInstance()
@@ -504,6 +509,51 @@ public class MusicLibraryTreeWidget
                 );
     }
 
+
+
+
+    public Set<Path> getExpandedFoldersSnapshot() {
+        return new HashSet<>(expandedFolders);
+    }
+
+    public double getScrollAmount() {
+        return scrollAmount;
+    }
+
+    public void restoreState(
+            Set<Path> expanded,
+            Path selected,
+            double scroll) {
+
+        expandedFolders.clear();
+
+        if (expanded != null) {
+            for (Path path : expanded) {
+                Path normalized = normalize(path);
+                if (normalized != null) {
+                    expandedFolders.add(normalized);
+                }
+            }
+        }
+
+        selectedPath = normalize(selected);
+        selectedEntry = null;
+
+        rebuildEntries();
+
+        if (selectedPath != null) {
+            for (VisibleEntry visible : visibleEntries) {
+                Path candidate = normalize(visible.entry().path());
+                if (selectedPath.equals(candidate)) {
+                    selectedEntry = visible.entry();
+                    break;
+                }
+            }
+        }
+
+        scrollAmount = Math.max(0.0D, scroll);
+        clampScroll();
+    }
 
     public Path getSelectedPath() {
         return selectedPath;

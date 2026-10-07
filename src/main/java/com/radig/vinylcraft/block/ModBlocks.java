@@ -96,6 +96,17 @@ public class ModBlocks {
     public static final Block WARPED_VINYL_RECORDER =
             createVinylRecorder(ModBlockItemIds.WARPED_VINYL_RECORDER);
 
+    /** Bloque técnico sin item: cada pieza representa una zona del póster mural. */
+    public static final Block ALBUM_FRAME =
+            new AlbumFrameBlock(
+                    BlockBehaviour.Properties.of()
+                            .noCollision()
+                            .noOcclusion()
+                            .instabreak()
+                            .noLootTable()
+                            .setId(ModBlockItemIds.ALBUM_FRAME.block())
+            );
+
     /*
      * =====================================================
      * CREACIÓN
@@ -183,6 +194,12 @@ public class ModBlocks {
         registerBlock(ModBlockItemIds.CRIMSON_VINYL_RECORDER, CRIMSON_VINYL_RECORDER);
 
         registerBlock(ModBlockItemIds.WARPED_VINYL_RECORDER, WARPED_VINYL_RECORDER);
+
+        Registry.register(
+                BuiltInRegistries.BLOCK,
+                ModBlockItemIds.ALBUM_FRAME.block(),
+                ALBUM_FRAME
+        );
 
     }
 

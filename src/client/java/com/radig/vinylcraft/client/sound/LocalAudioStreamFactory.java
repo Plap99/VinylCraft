@@ -36,6 +36,7 @@ public final class LocalAudioStreamFactory {
         return switch (extension) {
             case "mp3" -> new Mp3MonoAudioStream(path, safeStart);
             case "wav" -> new WavMonoAudioStream(path, safeStart);
+            case "m4a" -> new M4aMonoAudioStream(path, safeStart);
             default -> throw new IOException(
                     "Formato local no soportado: " + extension
             );
@@ -48,7 +49,11 @@ public final class LocalAudioStreamFactory {
         }
 
         String extension = extension(path);
-        return extension.equals("mp3") || extension.equals("wav");
+        return switch (extension) {
+            case "mp3", "wav" -> true;
+            case "m4a" -> M4aMonoAudioStream.isAvailable();
+            default -> false;
+        };
     }
 
     private static String extension(Path path) {

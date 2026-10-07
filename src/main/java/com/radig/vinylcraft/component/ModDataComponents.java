@@ -36,6 +36,18 @@ public final class ModDataComponents {
                             .build()
             );
 
+    public static final DataComponentType<Integer> ALBUM_WALL_SIZE =
+            Registry.register(
+                    BuiltInRegistries.DATA_COMPONENT_TYPE,
+                    VinylCraft.id("album_wall_size"),
+                    DataComponentType.<Integer>builder()
+                            .persistent(Codec.intRange(1, 10))
+                            .networkSynchronized(
+                                    ByteBufCodecs.VAR_INT
+                            )
+                            .build()
+            );
+
     private ModDataComponents() {
     }
 

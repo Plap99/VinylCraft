@@ -125,16 +125,15 @@ public class VinylRecorderBlock
         LocalHit localHit = toModelCoordinates(state, pos, hit);
 
         /*
-         * Grabador vacío + vinilo realmente virgen = insertar.
-         * Los vinilos grabados nunca vuelven a entrar al grabador.
+         * Grabador vacío + vinilo del mod (virgen o grabado) = insertar.
+         * Los grabados solo permiten consultar INFO, nunca volver a grabar.
          */
         if (
                 !recorder.hasVinyl()
                         && stack.is(ModItems.BLANK_VINYL)
-                        && !VinylData.hasAlbum(stack)
         ) {
             if (!level.isClientSide()) {
-                if (recorder.insertBlankVinyl(stack)) {
+                if (recorder.insertVinyl(stack)) {
                     stack.consume(1, player);
                 }
             }
@@ -195,6 +194,13 @@ public class VinylRecorderBlock
          * De esta forma el resto del grabador queda libre para sacar
          * el vinilo con un clic normal, sin Shift.
          */
+        if (isInfoButton(localHit)) {
+            if (recorder.hasRecordedVinyl()) {
+                openAlbumInfo(level, pos);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
         if (isRecordButton(localHit)) {
             if (recorder.hasBlankVinyl()) {
                 openRecorderScreen(level, pos);
@@ -209,6 +215,13 @@ public class VinylRecorderBlock
          * existe ninguno, el disco cae al mundo junto al grabador.
          */
         return removeVinyl(level, pos, player, recorder);
+    }
+
+    private static boolean isInfoButton(LocalHit hit) {
+        // Simétrico al REC, situado al lado opuesto del foco central.
+        return hit.x >= 11.0D && hit.x <= 14.0D
+                && hit.y >= 5.4D && hit.y <= 8.0D
+                && hit.z >= 0.0D && hit.z <= 1.7D;
     }
 
     private static boolean isRecordButton(LocalHit hit) {
@@ -239,6 +252,12 @@ public class VinylRecorderBlock
         }
 
         return InteractionResult.SUCCESS;
+    }
+
+    private static void openAlbumInfo(Level level, BlockPos pos) {
+        if (level.isClientSide()) {
+            VinylRecorderClientBridge.openAlbumInfoScreen(pos);
+        }
     }
 
     private static void openRecorderScreen(

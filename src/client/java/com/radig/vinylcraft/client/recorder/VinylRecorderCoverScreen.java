@@ -72,9 +72,13 @@ public class VinylRecorderCoverScreen extends Screen {
 
         this.addRenderableWidget(treeWidget);
 
+        draft.restoreTreeState(treeWidget);
+
         treeWidget.setSelectionChangedListener(
                 this::handleTreeSelectionChanged
         );
+
+        handleTreeSelectionChanged();
 
         int buttonGap = 6;
         int buttonWidth = Math.max(72, (layout.panelWidth() - buttonGap - 20) / 2);
@@ -139,6 +143,8 @@ public class VinylRecorderCoverScreen extends Screen {
     }
 
     private void goBack() {
+        draft.captureTreeState(treeWidget);
+
         if (this.minecraft != null) {
             this.minecraft.gui.setScreen(
                     new VinylRecorderScreen(draft)

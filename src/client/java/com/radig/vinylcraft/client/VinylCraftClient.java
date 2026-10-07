@@ -9,6 +9,7 @@ import com.radig.vinylcraft.client.render.VinylPlayerTonearmModel;
 import com.radig.vinylcraft.client.render.VinylPlayerButtonModel;
 import com.radig.vinylcraft.client.render.VinylRecorderBlockEntityRenderer;
 import com.radig.vinylcraft.client.render.VinylRecorderTonearmModel;
+import com.radig.vinylcraft.client.render.AlbumFrameBlockEntityRenderer;
 import com.radig.vinylcraft.client.sound.VinylPlayerSoundManager;
 import com.radig.vinylcraft.client.music.RecordedAlbumStore;
 import com.radig.vinylcraft.sound.VinylPlayerAudioBridge;
@@ -43,6 +44,7 @@ import org.lwjgl.glfw.GLFW;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.radig.vinylcraft.client.library.MusicLibraryScreen;
 import com.radig.vinylcraft.client.recorder.VinylRecorderScreen;
+import com.radig.vinylcraft.client.recorder.VinylAlbumInfoScreen;
 import com.radig.vinylcraft.recorder.VinylRecorderClientBridge;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -71,6 +73,13 @@ public class VinylCraftClient implements ClientModInitializer {
                 }
         );
 
+        VinylRecorderClientBridge.setOpenAlbumInfoHandler(pos -> {
+            var client = net.minecraft.client.Minecraft.getInstance();
+            if (client.gui.screen() == null) {
+                client.gui.setScreen(new VinylAlbumInfoScreen(pos));
+            }
+        });
+
         ModelLayerRegistry.registerModelLayer(
                 VinylPlayerBlockEntityRenderer.TONEARM_LAYER,
                 VinylPlayerTonearmModel::createLayer
@@ -94,6 +103,11 @@ public class VinylCraftClient implements ClientModInitializer {
         BlockEntityRenderers.register(
                 ModBlockEntities.VINYL_RECORDER,
                 VinylRecorderBlockEntityRenderer::new
+        );
+
+        BlockEntityRenderers.register(
+                ModBlockEntities.ALBUM_FRAME,
+                AlbumFrameBlockEntityRenderer::new
         );
 
         /*
@@ -211,6 +225,20 @@ public class VinylCraftClient implements ClientModInitializer {
                                                 minutes,
                                                 seconds
                                         )
+                                ).withStyle(ChatFormatting.DARK_GRAY)
+                        );
+
+                        int wallSize = VinylData.getWallSize(stack);
+
+                        lines.add(
+                                Component.literal(
+                                        "Cuadro: " + wallSize + "x" + wallSize
+                                ).withStyle(ChatFormatting.DARK_GRAY)
+                        );
+
+                        lines.add(
+                                Component.literal(
+                                        "Clic derecho en una pared para mostrar la portada"
                                 ).withStyle(ChatFormatting.DARK_GRAY)
                         );
                 }

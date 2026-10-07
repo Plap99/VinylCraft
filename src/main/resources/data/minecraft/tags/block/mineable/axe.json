@@ -13,6 +13,18 @@
     "vinylcraft:bamboo_vinyl_player",
     "vinylcraft:crimson_vinyl_player",
     "vinylcraft:warped_vinyl_player",
-    "vinylcraft:vinyl_recorder"
+
+    "vinylcraft:oak_vinyl_recorder",
+    "vinylcraft:spruce_vinyl_recorder",
+    "vinylcraft:birch_vinyl_recorder",
+    "vinylcraft:jungle_vinyl_recorder",
+    "vinylcraft:acacia_vinyl_recorder",
+    "vinylcraft:dark_oak_vinyl_recorder",
+    "vinylcraft:mangrove_vinyl_recorder",
+    "vinylcraft:cherry_vinyl_recorder",
+    "vinylcraft:pale_oak_vinyl_recorder",
+    "vinylcraft:bamboo_vinyl_recorder",
+    "vinylcraft:crimson_vinyl_recorder",
+    "vinylcraft:warped_vinyl_recorder"
   ]
 }

@@ -1,6 +1,7 @@
 package com.radig.vinylcraft.block.entity;
 
 import com.radig.vinylcraft.item.VinylData;
+import com.radig.vinylcraft.item.ModItems;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -62,13 +63,13 @@ public class VinylRecorderBlockEntity
         return hasVinyl() && VinylData.hasAlbum(getVinyl());
     }
 
-    public boolean insertBlankVinyl(ItemStack stack) {
+    public boolean insertVinyl(ItemStack stack) {
 
         if (
                 stack == null
                         || stack.isEmpty()
-                        || VinylData.hasAlbum(stack)
                         || hasVinyl()
+                        || !stack.is(ModItems.BLANK_VINYL)
         ) {
             return false;
         }

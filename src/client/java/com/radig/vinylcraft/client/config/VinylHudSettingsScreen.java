@@ -19,100 +19,46 @@ public final class VinylHudSettingsScreen extends Screen {
 
     @Override
     protected void init() {
-        int controlWidth = 240;
-        int x = this.width / 2 - controlWidth / 2;
-        int y = 50;
+        // Dos grupos: visualización (izquierda) y audio (derecha).
+        int gap = 12;
+        int available = Math.min(600, Math.max(300, width - 36));
+        int controlWidth = (available - gap) / 2;
+        int xLeft = (width - available) / 2;
+        int xRight = xLeft + controlWidth + gap;
+        int y = Math.max(43, height / 2 - 76);
 
         enabledButton = this.addRenderableWidget(
-                Button.builder(
-                        enabledMessage(),
-                        button -> {
-                            VinylHudConfig.setEnabled(!VinylHudConfig.isEnabled());
-                            button.setMessage(enabledMessage());
-                            VinylHudConfig.save();
-                        }
-                )
-                .bounds(x, y, controlWidth, 20)
-                .build()
+                Button.builder(enabledMessage(), button -> {
+                    VinylHudConfig.setEnabled(!VinylHudConfig.isEnabled());
+                    button.setMessage(enabledMessage());
+                    VinylHudConfig.save();
+                }).bounds(xLeft, y, controlWidth, 20).build()
         );
 
         positionButton = this.addRenderableWidget(
-                Button.builder(
-                        positionMessage(),
-                        button -> {
-                            VinylHudConfig.setPosition(
-                                    VinylHudConfig.getPosition().next()
-                            );
-                            button.setMessage(positionMessage());
-                            VinylHudConfig.save();
-                        }
-                )
-                .bounds(x, y + 26, controlWidth, 20)
-                .build()
+                Button.builder(positionMessage(), button -> {
+                    VinylHudConfig.setPosition(VinylHudConfig.getPosition().next());
+                    button.setMessage(positionMessage());
+                    VinylHudConfig.save();
+                }).bounds(xLeft, y + 26, controlWidth, 20).build()
         );
 
-        this.addRenderableWidget(
-                new SizeSlider(
-                        x,
-                        y + 52,
-                        controlWidth,
-                        20
-                )
-        );
-
-        this.addRenderableWidget(
-                new AlphaSlider(
-                        x,
-                        y + 78,
-                        controlWidth,
-                        20
-                )
-        );
+        this.addRenderableWidget(new SizeSlider(xLeft, y + 52, controlWidth, 20));
+        this.addRenderableWidget(new AlphaSlider(xLeft, y + 78, controlWidth, 20));
 
         alphaModeButton = this.addRenderableWidget(
-                Button.builder(
-                        alphaModeMessage(),
-                        button -> {
-                            VinylHudConfig.setAlphaMode(
-                                    VinylHudConfig.getAlphaMode().next()
-                            );
-                            button.setMessage(alphaModeMessage());
-                            VinylHudConfig.save();
-                        }
-                )
-                .bounds(x, y + 104, controlWidth, 20)
-                .build()
+                Button.builder(alphaModeMessage(), button -> {
+                    VinylHudConfig.setAlphaMode(VinylHudConfig.getAlphaMode().next());
+                    button.setMessage(alphaModeMessage());
+                    VinylHudConfig.save();
+                }).bounds(xRight, y, controlWidth, 20).build()
         );
+        this.addRenderableWidget(new SoundDistanceSlider(xRight, y + 26, controlWidth, 20));
+        this.addRenderableWidget(new MusicVolumeSlider(xRight, y + 52, controlWidth, 20));
 
         this.addRenderableWidget(
-                new SoundDistanceSlider(
-                        x,
-                        y + 130,
-                        controlWidth,
-                        20
-                )
-        );
-
-        this.addRenderableWidget(
-                new MusicVolumeSlider(
-                        x,
-                        y + 156,
-                        controlWidth,
-                        20
-                )
-        );
-
-        this.addRenderableWidget(
-                Button.builder(
-                        Component.literal("Cerrar"),
-                        button -> onClose()
-                )
-                .bounds(
-                        this.width / 2 - 60,
-                        y + 192,
-                        120,
-                        20
-                )
+                Button.builder(Component.literal("Cerrar"), button -> onClose())
+                .bounds(width / 2 - 65, Math.min(height - 30, y + 145), 130, 20)
                 .build()
         );
     }
@@ -151,14 +97,15 @@ public final class VinylHudSettingsScreen extends Screen {
                 20,
                 0xFFFFFFFF
         );
+        int available = Math.min(600, Math.max(300, width - 36));
+        int controlWidth = (available - 12) / 2;
+        int left = (width - available) / 2;
+        int y = Math.max(43, height / 2 - 76);
+        graphics.centeredText(font, "HUD", left + controlWidth / 2,
+                y - 12, 0xFFBBBBBB);
+        graphics.centeredText(font, "Audio", left + controlWidth + 12 + controlWidth / 2,
+                y - 12, 0xFFBBBBBB);
 
-        graphics.centeredText(
-                this.font,
-                "F6 abre esta pantalla",
-                this.width / 2,
-                34,
-                0xFFAAAAAA
-        );
     }
 
     @Override

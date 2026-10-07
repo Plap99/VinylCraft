@@ -67,6 +67,20 @@ public class ModBlockEntities {
                     ModBlocks.WARPED_VINYL_RECORDER
             );
 
+    /*
+     * =====================================================
+     * ALBUM FRAME / POSTER
+     * =====================================================
+     */
+
+    public static final BlockEntityType<AlbumFrameBlockEntity>
+            ALBUM_FRAME =
+            register(
+                    "album_frame",
+                    AlbumFrameBlockEntity::new,
+                    ModBlocks.ALBUM_FRAME
+            );
+
     private static <T extends BlockEntity>
             BlockEntityType<T> register(
                     String name,

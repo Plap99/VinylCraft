@@ -10,7 +10,8 @@ public final class RecorderColorButton extends Button {
 
     public enum Theme {
         GREEN,
-        RED
+        RED,
+        NEUTRAL
     }
 
     private final Theme theme;
@@ -61,13 +62,22 @@ public final class RecorderColorButton extends Button {
                 borderColor = 0xFF4EAC68;
             }
             textColor = 0xFFFFFFFF;
-        } else {
+        } else if (theme == Theme.RED) {
             if (this.isHoveredOrFocused()) {
                 fillColor = 0xFFE04444;
                 borderColor = 0xFFFF8A8A;
             } else {
                 fillColor = 0xFFAA2424;
                 borderColor = 0xFFE45B5B;
+            }
+            textColor = 0xFFFFFFFF;
+        } else {
+            if (this.isHoveredOrFocused()) {
+                fillColor = 0xFF4A4A4A;
+                borderColor = 0xFFB8B8B8;
+            } else {
+                fillColor = 0xFF303030;
+                borderColor = 0xFF737373;
             }
             textColor = 0xFFFFFFFF;
         }
