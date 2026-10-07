@@ -14,10 +14,12 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +64,22 @@ public final class AlbumFrameBlock extends HorizontalDirectionalBlock implements
             case WEST -> WEST_SHAPE;
             default -> NORTH_SHAPE;
         };
+    }
+
+
+    /**
+     * Igual que un cuadro de Minecraft: el mural se puede seleccionar y
+     * romper mediante getShape(), pero NO bloquea al jugador. Esto permite
+     * usarlo como puerta/pasaje secreto.
+     */
+    @Override
+    protected VoxelShape getCollisionShape(
+            BlockState state,
+            BlockGetter level,
+            BlockPos pos,
+            CollisionContext context) {
+
+        return Shapes.empty();
     }
 
     @Nullable
@@ -110,7 +128,18 @@ public final class AlbumFrameBlock extends HorizontalDirectionalBlock implements
                     return false;
                 }
 
-                if (!Block.canSupportCenter(level, supportPos, facing)) {
+                boolean solidSupport =
+                        Block.canSupportCenter(level, supportPos, facing);
+
+                boolean signSupport =
+                        level.getBlockEntity(supportPos) instanceof SignBlockEntity;
+
+                /*
+                 * Los cuadros vanilla pueden mantenerse delante de carteles,
+                 * el truco clásico para hacer puertas secretas. Permitimos
+                 * exactamente ese soporte además de una pared sólida.
+                 */
+                if (!solidSupport && !signSupport) {
                     return false;
                 }
             }

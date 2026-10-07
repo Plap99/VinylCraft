@@ -30,6 +30,17 @@ public class VinylRecorderBlockEntityRenderer
 
     private static final int FULL_BRIGHT = 0x00F000F0;
 
+    /*
+     * Fila superior de pilotos:
+     * VERDE | AMARILLO | ROJO
+     */
+    private static final float GREEN_X = 3.45F / 16.0F;
+    private static final float YELLOW_X = 8.00F / 16.0F;
+    private static final float RED_X = 12.55F / 16.0F;
+    private static final float LIGHT_Y = 9.55F / 16.0F;
+    private static final float LIGHT_Z = 0.18F / 16.0F;
+    private static final float LIGHT_SIZE = 0.92F / 16.0F;
+
     public static final ModelLayerLocation TONEARM_LAYER =
             new ModelLayerLocation(
                     Identifier.fromNamespaceAndPath(
@@ -68,9 +79,9 @@ public class VinylRecorderBlockEntityRenderer
         );
 
         /*
-         * Usamos un sprite vanilla seguro y lo teñimos por vértice.
-         * Así el piloto REC nunca depende de que una textura propia
-         * haya sido cosida al atlas y evitamos el checker rosa/negro.
+         * Sprite vanilla seguro. Los colores reales se aplican por vértice.
+         * Así los pilotos no dependen de texturas dinámicas propias dentro
+         * del atlas y evitamos el checker rosa/negro.
          */
         this.indicatorSprite = context.sprites().get(
                 new SpriteId(
@@ -110,30 +121,28 @@ public class VinylRecorderBlockEntityRenderer
                 .getValue(VinylRecorderBlock.FACING);
         state.tonearmPosition = blockEntity.getTonearmPosition(tickProgress);
 
-        float animatedRecordingTicks =
-                blockEntity.getRecordingTicks()
-                        + (state.recording ? tickProgress : 0.0F);
+        state.greenLight = blockEntity.isCompletedLightOn();
+        state.yellowLight = blockEntity.shouldShowYellowLight();
+        state.yellowHardBlink = blockEntity.shouldHardBlinkYellow();
+        state.redProcessLight = blockEntity.shouldShowRedProcessLight();
+        state.redErrorLight = blockEntity.isWrongCloneTargetInserted();
 
-        state.discRotation =
-                animatedRecordingTicks * 12.0F;
+        long worldTicks =
+                blockEntity.getLevel() == null
+                        ? 0L
+                        : blockEntity.getLevel().getGameTime();
 
-        /*
-         * Pulso lento del piloto REC: un ciclo completo cada 2 segundos.
-         * El factor nunca llega a apagarse por completo; sólo "respira"
-         * mientras el disco está siendo grabado.
-         */
-        state.recPulse =
-                0.65F
-                        + 0.35F
-                        * (
-                            0.5F
-                                    + 0.5F
-                                    * (float) Math.sin(
-                                            animatedRecordingTicks
-                                                    * Math.PI
-                                                    / 20.0D
-                                    )
+        state.lightAnimationTicks = worldTicks + tickProgress;
+
+        float mechanicalTicks =
+                blockEntity.getMechanicalProcessTicks()
+                        + (
+                            blockEntity.isMechanicalProcessActive()
+                                    ? tickProgress
+                                    : 0.0F
                         );
+
+        state.discRotation = mechanicalTicks * 12.0F;
 
         if (state.hasVinyl) {
             itemModelResolver.updateForTopItem(
@@ -168,10 +177,6 @@ public class VinylRecorderBlockEntityRenderer
         matrices.mulPose(Axis.YP.rotationDegrees(blockRotation));
         matrices.translate(-0.5F, 0.0F, -0.5F);
 
-        /*
-         * Vinilo real: se renderiza el ItemStack, igual que en el Player.
-         * Ya no usamos un quad transparente independiente.
-         */
         if (state.hasVinyl) {
             matrices.pushPose();
 
@@ -183,7 +188,6 @@ public class VinylRecorderBlockEntityRenderer
 
             matrices.mulPose(Axis.XP.rotationDegrees(90.0F));
             matrices.mulPose(Axis.ZP.rotationDegrees(state.discRotation));
-
             matrices.scale(0.42F, 0.42F, 0.42F);
 
             state.vinyl.submit(
@@ -197,47 +201,7 @@ public class VinylRecorderBlockEntityRenderer
             matrices.popPose();
         }
 
-        /*
-         * Único indicador frontal dinámico: REC.
-         */
-        if (state.recording && state.hasVinyl) {
-            /*
-             * El botón físico REC está centrado en Y=6.70.
-             * Alineamos el piloto a esa misma altura y lo hacemos un poco
-             * más grande para que el frente quede simétrico.
-             */
-            float pulseScale =
-                    1.0F + (state.recPulse - 0.65F) * 0.10F;
-
-            float lightSize =
-                    (0.92F * pulseScale) / 16.0F;
-
-            int alpha =
-                    Math.max(
-                            0,
-                            Math.min(
-                                    255,
-                                    Math.round(145.0F + 110.0F * state.recPulse)
-                            )
-                    );
-
-            submitFrontQuad(
-                    queue,
-                    matrices,
-                    indicatorSprite,
-                    8.0F / 16.0F,
-                    6.70F / 16.0F,
-                    0.18F / 16.0F,
-                    lightSize,
-                    lightSize,
-                    FULL_BRIGHT,
-                    alpha,
-                    255,
-                    28,
-                    28,
-                    true
-            );
-        }
+        submitIndicatorLights(state, matrices, queue);
 
         /*
          * Brazo dinámico.
@@ -264,6 +228,116 @@ public class VinylRecorderBlockEntityRenderer
         );
 
         matrices.popPose();
+    }
+
+    private void submitIndicatorLights(
+            VinylRecorderRenderState state,
+            PoseStack matrices,
+            SubmitNodeCollector queue) {
+
+        /*
+         * VERDE: proceso terminado. Fijo hasta retirar el disco.
+         */
+        if (state.greenLight) {
+            submitFrontQuad(
+                    queue,
+                    matrices,
+                    indicatorSprite,
+                    GREEN_X,
+                    LIGHT_Y,
+                    LIGHT_Z,
+                    LIGHT_SIZE,
+                    LIGHT_SIZE,
+                    FULL_BRIGHT,
+                    255,
+                    45,
+                    255,
+                    70,
+                    true
+            );
+        }
+
+        /*
+         * AMARILLO:
+         * - leyendo original -> pulso suave.
+         * - original listo / esperando virgen -> ON/OFF muy evidente.
+         */
+        if (state.yellowLight) {
+            int alpha;
+
+            if (state.yellowHardBlink) {
+                boolean on =
+                        ((int) (state.lightAnimationTicks / 10.0F)) % 2 == 0;
+                alpha = on ? 255 : 0;
+            } else {
+                float pulse =
+                        0.5F
+                                + 0.5F
+                                * (float) Math.sin(
+                                        state.lightAnimationTicks
+                                                * Math.PI
+                                                / 10.0D
+                                );
+                alpha = Math.round(95.0F + 160.0F * pulse);
+            }
+
+            if (alpha > 0) {
+                submitFrontQuad(
+                        queue,
+                        matrices,
+                        indicatorSprite,
+                        YELLOW_X,
+                        LIGHT_Y,
+                        LIGHT_Z,
+                        LIGHT_SIZE,
+                        LIGHT_SIZE,
+                        FULL_BRIGHT,
+                        alpha,
+                        255,
+                        210,
+                        35,
+                        true
+                );
+            }
+        }
+
+        /*
+         * ROJO:
+         * - grabación normal / escritura del clon -> pulso.
+         * - disco grabado incorrecto como destino -> rojo fijo.
+         */
+        if (state.redProcessLight || state.redErrorLight) {
+            int alpha = 255;
+
+            if (!state.redErrorLight) {
+                float pulse =
+                        0.5F
+                                + 0.5F
+                                * (float) Math.sin(
+                                        state.lightAnimationTicks
+                                                * Math.PI
+                                                / 10.0D
+                                );
+                alpha = Math.round(110.0F + 145.0F * pulse);
+            }
+
+            submitFrontQuad(
+                    queue,
+                    matrices,
+                    indicatorSprite,
+                    RED_X,
+                    LIGHT_Y,
+                    LIGHT_Z,
+                    LIGHT_SIZE,
+                    LIGHT_SIZE,
+                    FULL_BRIGHT,
+                    alpha,
+                    255,
+                    30,
+                    30,
+                    true
+            );
+        }
     }
 
     private void submitFrontQuad(

@@ -38,10 +38,10 @@ public class VinylRecorderTonearmModel {
                         .addBox(
                                 -0.30F,
                                 -0.28F,
-                                -6.35F,
+                                -5.85F,
                                 0.60F,
                                 0.56F,
-                                6.35F
+                                5.85F
                         ),
                 PartPose.rotation(
                         0.0F,
@@ -57,7 +57,7 @@ public class VinylRecorderTonearmModel {
                         .addBox(
                                 -0.75F,
                                 -0.30F,
-                                -7.10F,
+                                -6.55F,
                                 1.25F,
                                 0.62F,
                                 1.05F
@@ -76,7 +76,7 @@ public class VinylRecorderTonearmModel {
                         .addBox(
                                 -0.15F,
                                 -0.34F,
-                                -7.30F,
+                                -6.78F,
                                 0.16F,
                                 0.30F,
                                 0.34F

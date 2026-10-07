@@ -4,7 +4,6 @@ import com.mojang.serialization.MapCodec;
 import com.radig.vinylcraft.block.entity.ModBlockEntities;
 import com.radig.vinylcraft.block.entity.VinylRecorderBlockEntity;
 import com.radig.vinylcraft.item.ModItems;
-import com.radig.vinylcraft.item.VinylData;
 import com.radig.vinylcraft.recorder.VinylRecorderClientBridge;
 
 import net.minecraft.core.BlockPos;
@@ -37,10 +36,6 @@ public class VinylRecorderBlock
     public static final MapCodec<VinylRecorderBlock> CODEC =
             simpleCodec(VinylRecorderBlock::new);
 
-    /*
-     * El modelo NO tiene tapa.
-     * El shape cubre únicamente el cuerpo y la mesa superior.
-     */
     private static final VoxelShape SHAPE =
             Block.box(
                     1.0D, 0.0D, 1.0D,
@@ -125,8 +120,12 @@ public class VinylRecorderBlock
         LocalHit localHit = toModelCoordinates(state, pos, hit);
 
         /*
-         * Grabador vacío + vinilo del mod (virgen o grabado) = insertar.
-         * Los grabados solo permiten consultar INFO, nunca volver a grabar.
+         * Inserción física del vinilo.
+         *
+         * Fuera de clonación acepta virgen o grabado.
+         * Cuando el clonador espera destino:
+         * - virgen  -> comienza automáticamente los 30 s de escritura.
+         * - grabado -> entra, pero queda marcado como error por las luces.
          */
         if (
                 !recorder.hasVinyl()
@@ -185,52 +184,90 @@ public class VinylRecorderBlock
             return InteractionResult.SUCCESS;
         }
 
-        if (recorder.isRecording()) {
+        /*
+         * Mientras la aguja está leyendo/grabando, la máquina queda bloqueada.
+         * Evita retirar el disco a mitad del proceso y elimina una vía de
+         * duplicación o clonación incompleta.
+         */
+        if (recorder.isBusy()) {
             return InteractionResult.SUCCESS;
         }
 
         /*
-         * El nuevo botón físico REC es la ÚNICA entrada a la GUI.
-         * De esta forma el resto del grabador queda libre para sacar
-         * el vinilo con un clic normal, sin Shift.
+         * INFO | REC | CLONAR
+         *
+         * Durante una clonación en espera los botones no cambian de modo:
+         * el usuario debe retirar el original/disco incorrecto haciendo clic
+         * en cualquier otra zona del grabador.
          */
         if (isInfoButton(localHit)) {
-            if (recorder.hasRecordedVinyl()) {
+            if (
+                    recorder.hasRecordedVinyl()
+                            && (
+                                !recorder.isCloneSessionActive()
+                                || recorder.isCloneComplete()
+                            )
+            ) {
                 openAlbumInfo(level, pos);
             }
+
             return InteractionResult.SUCCESS;
         }
 
         if (isRecordButton(localHit)) {
-            if (recorder.hasBlankVinyl()) {
+            if (
+                    recorder.hasBlankVinyl()
+                            && !recorder.isCloneSessionActive()
+                            && !recorder.isCompletedLightOn()
+            ) {
                 openRecorderScreen(level, pos);
             }
 
             return InteractionResult.SUCCESS;
         }
 
+        if (isCloneButton(localHit)) {
+            if (
+                    recorder.hasRecordedVinyl()
+                            && !recorder.isCloneSessionActive()
+                            && !recorder.isCompletedLightOn()
+            ) {
+                if (!level.isClientSide()) {
+                    recorder.startCloneReading();
+                }
+            }
+
+            return InteractionResult.SUCCESS;
+        }
+
         /*
-         * Cualquier otro clic retira el vinilo. player.addItem busca
-         * automáticamente cualquier hueco libre del inventario; si no
-         * existe ninguno, el disco cae al mundo junto al grabador.
+         * Cualquier otro clic retira el disco cuando la mecánica lo permite.
+         * El inventario busca un hueco libre; si está lleno, el vinilo cae.
+         *
+         * Caso especial de clonación:
+         * SOURCE_READY -> retirar original cambia a WAITING_BLANK.
+         * WAITING_BLANK con disco grabado -> retirarlo conserva la espera.
+         * COMPLETE -> retirar copia apaga verde y resetea la sesión.
          */
         return removeVinyl(level, pos, player, recorder);
     }
 
     private static boolean isInfoButton(LocalHit hit) {
-        // Simétrico al REC, situado al lado opuesto del foco central.
-        return hit.x >= 11.0D && hit.x <= 14.0D
-                && hit.y >= 5.4D && hit.y <= 8.0D
+        return hit.x >= 2.0D && hit.x <= 5.0D
+                && hit.y >= 5.2D && hit.y <= 8.0D
                 && hit.z >= 0.0D && hit.z <= 1.7D;
     }
 
     private static boolean isRecordButton(LocalHit hit) {
-        return hit.x >= 2.0D
-                && hit.x <= 5.0D
-                && hit.y >= 5.4D
-                && hit.y <= 8.0D
-                && hit.z >= 0.0D
-                && hit.z <= 1.7D;
+        return hit.x >= 6.5D && hit.x <= 9.5D
+                && hit.y >= 5.2D && hit.y <= 8.0D
+                && hit.z >= 0.0D && hit.z <= 1.7D;
+    }
+
+    private static boolean isCloneButton(LocalHit hit) {
+        return hit.x >= 11.0D && hit.x <= 14.0D
+                && hit.y >= 5.2D && hit.y <= 8.0D
+                && hit.z >= 0.0D && hit.z <= 1.7D;
     }
 
     private static InteractionResult removeVinyl(
@@ -239,7 +276,7 @@ public class VinylRecorderBlock
             Player player,
             VinylRecorderBlockEntity recorder) {
 
-        if (recorder.isRecording()) {
+        if (recorder.isBusy()) {
             return InteractionResult.SUCCESS;
         }
 
@@ -315,5 +352,4 @@ public class VinylRecorderBlock
             double y,
             double z) {
     }
-
 }

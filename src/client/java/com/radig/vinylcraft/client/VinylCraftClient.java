@@ -80,6 +80,11 @@ public class VinylCraftClient implements ClientModInitializer {
             }
         });
 
+
+        VinylRecorderClientBridge.setCloneAlbumHandler(
+                RecordedAlbumStore::cloneAlbumAsIndependent
+        );
+
         ModelLayerRegistry.registerModelLayer(
                 VinylPlayerBlockEntityRenderer.TONEARM_LAYER,
                 VinylPlayerTonearmModel::createLayer
@@ -236,11 +241,6 @@ public class VinylCraftClient implements ClientModInitializer {
                                 ).withStyle(ChatFormatting.DARK_GRAY)
                         );
 
-                        lines.add(
-                                Component.literal(
-                                        "Clic derecho en una pared para mostrar la portada"
-                                ).withStyle(ChatFormatting.DARK_GRAY)
-                        );
                 }
         );
         }

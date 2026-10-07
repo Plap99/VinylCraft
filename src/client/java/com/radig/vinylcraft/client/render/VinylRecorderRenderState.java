@@ -15,7 +15,13 @@ public class VinylRecorderRenderState
     public boolean recording;
     public boolean hasVinyl;
 
+    public boolean greenLight;
+    public boolean yellowLight;
+    public boolean yellowHardBlink;
+    public boolean redProcessLight;
+    public boolean redErrorLight;
+
+    public float lightAnimationTicks;
     public float discRotation;
     public float tonearmPosition;
-    public float recPulse = 1.0F;
 }

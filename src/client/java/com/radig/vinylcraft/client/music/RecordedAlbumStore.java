@@ -108,6 +108,47 @@ public final class RecordedAlbumStore {
         }
     }
 
+
+    /**
+     * Crea una copia independiente de un álbum ya registrado.
+     * Las pistas conservan los mismos archivos de audio y duraciones, pero
+     * el nuevo álbum obtiene su propio ID. De esta manera título, artista,
+     * portada y nombres visibles de pistas pueden editarse sin alterar el
+     * original.
+     *
+     * El método es idempotente: si targetAlbumId ya existe no vuelve a crear
+     * ni a sobrescribir nada. Esto permite llamarlo cada tick mientras el
+     * BlockEntity sincroniza el estado COMPLETE.
+     */
+    public static void cloneAlbumAsIndependent(
+            String sourceAlbumId,
+            String targetAlbumId) {
+
+        if (sourceAlbumId == null
+                || sourceAlbumId.isBlank()
+                || targetAlbumId == null
+                || targetAlbumId.isBlank()
+                || ModAlbums.contains(targetAlbumId)) {
+            return;
+        }
+
+        AlbumData source = ModAlbums.get(sourceAlbumId);
+
+        if (source == null || source.isEmpty()) {
+            return;
+        }
+
+        AlbumData clone = new AlbumData(
+                targetAlbumId,
+                source.title(),
+                source.artist(),
+                source.coverFile(),
+                source.tracks()
+        );
+
+        registerAndSave(clone);
+    }
+
     public static void registerAndSave(AlbumData album) {
 
         if (album == null || album.isEmpty()) {
