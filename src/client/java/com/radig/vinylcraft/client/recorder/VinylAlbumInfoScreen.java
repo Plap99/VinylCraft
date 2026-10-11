@@ -337,8 +337,6 @@ public final class VinylAlbumInfoScreen extends Screen {
             int mouseY,
             float delta) {
 
-        super.extractRenderState(graphics, mouseX, mouseY, delta);
-
         AlbumData album = currentAlbum();
         Layout layout = getLayout();
 
@@ -366,6 +364,7 @@ public final class VinylAlbumInfoScreen extends Screen {
                     layout.top() + 20,
                     0xFFFF9999
             );
+            super.extractRenderState(graphics, mouseX, mouseY, delta);
             return;
         }
 
@@ -490,6 +489,9 @@ public final class VinylAlbumInfoScreen extends Screen {
                     0xFFAAAAAA
             );
         }
+
+        /* Los widgets se extraen al final para que el panel no los oscurezca. */
+        super.extractRenderState(graphics, mouseX, mouseY, delta);
     }
 
     private void drawOutline(

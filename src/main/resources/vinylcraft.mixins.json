@@ -1,14 +1,18 @@
 {
-	"required": true,
-	"package": "com.radig.vinylcraft.mixin",
-	"compatibilityLevel": "JAVA_25",
-	"mixins": [
-		"ExampleMixin"
-	],
-	"injectors": {
-		"defaultRequire": 1
-	},
-	"overwrites": {
-		"requireAnnotations": true
-	}
+    "required": true,
+    "package": "com.radig.vinylcraft.mixin",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": [
+        "ExampleMixin",
+        "AbstractContainerMenuInvoker",
+        "InventoryMenuMixin",
+        "PlayerDiscmanEquipmentMixin",
+        "ServerPlayerDiscmanEquipmentMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    },
+    "overwrites": {
+        "requireAnnotations": true
+    }
 }

@@ -10,14 +10,21 @@ import com.radig.vinylcraft.client.render.VinylPlayerButtonModel;
 import com.radig.vinylcraft.client.render.VinylRecorderBlockEntityRenderer;
 import com.radig.vinylcraft.client.render.VinylRecorderTonearmModel;
 import com.radig.vinylcraft.client.render.AlbumFrameBlockEntityRenderer;
+import com.radig.vinylcraft.client.render.becoya.BecoyaAccessoriesLayer;
+import com.radig.vinylcraft.client.render.becoya.BecoyaAccessoryModel;
 import com.radig.vinylcraft.client.sound.VinylPlayerSoundManager;
+import com.radig.vinylcraft.item.DiscmanData;
+import com.radig.vinylcraft.item.HeadphonesItem;
+import com.radig.vinylcraft.client.sound.DiscmanSoundManager;
 import com.radig.vinylcraft.client.music.RecordedAlbumStore;
 import com.radig.vinylcraft.sound.VinylPlayerAudioBridge;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityRenderLayerRegistrationCallback;
 
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
+import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 
 import com.radig.vinylcraft.item.ModItems;
 import com.radig.vinylcraft.item.VinylData;
@@ -100,6 +107,39 @@ public class VinylCraftClient implements ClientModInitializer {
                 VinylRecorderTonearmModel::createLayer
         );
 
+        /*
+         * Becoya's Module: modelos realmente unidos al avatar.
+         * Al usar un RenderLayer de jugador se ven tanto en tercera persona
+         * como en la vista previa del inventario.
+         */
+        ModelLayerRegistry.registerModelLayer(
+                BecoyaAccessoriesLayer.DISCMAN_LAYER,
+                BecoyaAccessoryModel::createDiscmanLayer
+        );
+
+        ModelLayerRegistry.registerModelLayer(
+                BecoyaAccessoriesLayer.HEADPHONES_LAYER,
+                BecoyaAccessoryModel::createHeadphonesLayer
+        );
+
+        ModelLayerRegistry.registerModelLayer(
+                BecoyaAccessoriesLayer.CABLE_LAYER,
+                BecoyaAccessoryModel::createCableLayer
+        );
+
+        LivingEntityRenderLayerRegistrationCallback.EVENT.register(
+                (entityType, entityRenderer, registrationHelper, context) -> {
+                    if (entityRenderer instanceof AvatarRenderer<?> avatarRenderer) {
+                        registrationHelper.register(
+                                new BecoyaAccessoriesLayer(
+                                        avatarRenderer,
+                                        context.getModelSet()
+                                )
+                        );
+                    }
+                }
+        );
+
         BlockEntityRenderers.register(
                 ModBlockEntities.VINYL_PLAYER,
                 VinylPlayerBlockEntityRenderer::new
@@ -147,6 +187,8 @@ public class VinylCraftClient implements ClientModInitializer {
                                         new MusicLibraryScreen()
                                 );
                         }
+
+                        DiscmanSoundManager.tick(client);
                 }
         );
     }
@@ -154,6 +196,24 @@ public class VinylCraftClient implements ClientModInitializer {
     private static void registerVinylTooltips() {
         ItemTooltipCallback.EVENT.register(
                 (stack, tooltipContext, tooltipFlag, lines) -> {
+
+                        if (stack.is(ModItems.DISCMAN)) {
+                                lines.add(
+                                        Component.literal(
+                                                "Reproductor portátil de vinilos"
+                                        ).withStyle(ChatFormatting.GRAY)
+                                );
+                                return;
+                        }
+
+                        if (stack.getItem() instanceof HeadphonesItem) {
+                                lines.add(
+                                        Component.literal(
+                                                "Audífonos estéreo"
+                                        ).withStyle(ChatFormatting.GRAY)
+                                );
+                                return;
+                        }
 
                         if (!stack.is(ModItems.BLANK_VINYL)) {
                         return;
@@ -449,4 +509,5 @@ public class VinylCraftClient implements ClientModInitializer {
                                 VINYLCRAFT_CATEGORY
                         )
                 );
+
         }

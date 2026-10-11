@@ -12,6 +12,7 @@ public final class VinylHudSettingsScreen extends Screen {
     private Button enabledButton;
     private Button positionButton;
     private Button alphaModeButton;
+    private Button sourceModeButton;
 
     public VinylHudSettingsScreen() {
         super(Component.literal("VinylCraft - Configuración"));
@@ -19,15 +20,15 @@ public final class VinylHudSettingsScreen extends Screen {
 
     @Override
     protected void init() {
-        // Dos grupos: visualización (izquierda) y audio (derecha).
         int gap = 12;
         int available = Math.min(600, Math.max(300, width - 36));
         int controlWidth = (available - gap) / 2;
         int xLeft = (width - available) / 2;
         int xRight = xLeft + controlWidth + gap;
-        int y = Math.max(43, height / 2 - 76);
+        int y = Math.max(40, height / 2 - 92);
 
-        enabledButton = this.addRenderableWidget(
+        // Columna izquierda: HUD visual.
+        enabledButton = addRenderableWidget(
                 Button.builder(enabledMessage(), button -> {
                     VinylHudConfig.setEnabled(!VinylHudConfig.isEnabled());
                     button.setMessage(enabledMessage());
@@ -35,7 +36,7 @@ public final class VinylHudSettingsScreen extends Screen {
                 }).bounds(xLeft, y, controlWidth, 20).build()
         );
 
-        positionButton = this.addRenderableWidget(
+        positionButton = addRenderableWidget(
                 Button.builder(positionMessage(), button -> {
                     VinylHudConfig.setPosition(VinylHudConfig.getPosition().next());
                     button.setMessage(positionMessage());
@@ -43,22 +44,38 @@ public final class VinylHudSettingsScreen extends Screen {
                 }).bounds(xLeft, y + 26, controlWidth, 20).build()
         );
 
-        this.addRenderableWidget(new SizeSlider(xLeft, y + 52, controlWidth, 20));
-        this.addRenderableWidget(new AlphaSlider(xLeft, y + 78, controlWidth, 20));
+        addRenderableWidget(new SizeSlider(xLeft, y + 52, controlWidth, 20));
+        addRenderableWidget(new AlphaSlider(xLeft, y + 78, controlWidth, 20));
 
-        alphaModeButton = this.addRenderableWidget(
+        alphaModeButton = addRenderableWidget(
                 Button.builder(alphaModeMessage(), button -> {
                     VinylHudConfig.setAlphaMode(VinylHudConfig.getAlphaMode().next());
                     button.setMessage(alphaModeMessage());
                     VinylHudConfig.save();
+                }).bounds(xLeft, y + 104, controlWidth, 20).build()
+        );
+
+        // Columna derecha: fuentes y audio.
+        sourceModeButton = addRenderableWidget(
+                Button.builder(sourceModeMessage(), button -> {
+                    VinylHudConfig.setSourceMode(VinylHudConfig.getSourceMode().next());
+                    button.setMessage(sourceModeMessage());
+                    VinylHudConfig.save();
                 }).bounds(xRight, y, controlWidth, 20).build()
         );
-        this.addRenderableWidget(new SoundDistanceSlider(xRight, y + 26, controlWidth, 20));
-        this.addRenderableWidget(new MusicVolumeSlider(xRight, y + 52, controlWidth, 20));
 
-        this.addRenderableWidget(
+        addRenderableWidget(new MaxSourcesSlider(xRight, y + 26, controlWidth, 20));
+        addRenderableWidget(new SoundDistanceSlider(xRight, y + 52, controlWidth, 20));
+        addRenderableWidget(new MusicVolumeSlider(xRight, y + 78, controlWidth, 20));
+
+        addRenderableWidget(
                 Button.builder(Component.literal("Cerrar"), button -> onClose())
-                .bounds(width / 2 - 65, Math.min(height - 30, y + 145), 130, 20)
+                .bounds(
+                        width / 2 - 65,
+                        Math.min(height - 30, y + 146),
+                        130,
+                        20
+                )
                 .build()
         );
     }
@@ -81,6 +98,12 @@ public final class VinylHudSettingsScreen extends Screen {
         );
     }
 
+    private Component sourceModeMessage() {
+        return Component.literal(
+                "Fuentes: " + VinylHudConfig.getSourceMode().label()
+        );
+    }
+
     @Override
     public void extractRenderState(
             GuiGraphicsExtractor graphics,
@@ -97,15 +120,6 @@ public final class VinylHudSettingsScreen extends Screen {
                 20,
                 0xFFFFFFFF
         );
-        int available = Math.min(600, Math.max(300, width - 36));
-        int controlWidth = (available - 12) / 2;
-        int left = (width - available) / 2;
-        int y = Math.max(43, height / 2 - 76);
-        graphics.centeredText(font, "HUD", left + controlWidth / 2,
-                y - 12, 0xFFBBBBBB);
-        graphics.centeredText(font, "Audio", left + controlWidth + 12 + controlWidth / 2,
-                y - 12, 0xFFBBBBBB);
-
     }
 
     @Override
@@ -132,30 +146,24 @@ public final class VinylHudSettingsScreen extends Screen {
                             VinylHudConfig.MAX_SCALE
                     )
             );
-
             updateMessage();
         }
 
         @Override
         protected void updateMessage() {
             float scale = denormalize(
-                    this.value,
+                    value,
                     VinylHudConfig.MIN_SCALE,
                     VinylHudConfig.MAX_SCALE
             );
-
-            setMessage(
-                    Component.literal(
-                            "Tamaño: " + Math.round(scale * 100.0F) + "%"
-                    )
-            );
+            setMessage(Component.literal("Tamaño: " + Math.round(scale * 100.0F) + "%"));
         }
 
         @Override
         protected void applyValue() {
             VinylHudConfig.setScale(
                     denormalize(
-                            this.value,
+                            value,
                             VinylHudConfig.MIN_SCALE,
                             VinylHudConfig.MAX_SCALE
                     )
@@ -179,30 +187,24 @@ public final class VinylHudSettingsScreen extends Screen {
                             VinylHudConfig.MAX_ALPHA
                     )
             );
-
             updateMessage();
         }
 
         @Override
         protected void updateMessage() {
             float alpha = denormalize(
-                    this.value,
+                    value,
                     VinylHudConfig.MIN_ALPHA,
                     VinylHudConfig.MAX_ALPHA
             );
-
-            setMessage(
-                    Component.literal(
-                            "Opacidad: " + Math.round(alpha * 100.0F) + "%"
-                    )
-            );
+            setMessage(Component.literal("Opacidad: " + Math.round(alpha * 100.0F) + "%"));
         }
 
         @Override
         protected void applyValue() {
             VinylHudConfig.setAlpha(
                     denormalize(
-                            this.value,
+                            value,
                             VinylHudConfig.MIN_ALPHA,
                             VinylHudConfig.MAX_ALPHA
                     )
@@ -211,9 +213,50 @@ public final class VinylHudSettingsScreen extends Screen {
         }
     }
 
+    private static final class MaxSourcesSlider extends AbstractSliderButton {
+
+        private MaxSourcesSlider(int x, int y, int width, int height) {
+            super(
+                    x,
+                    y,
+                    width,
+                    height,
+                    Component.empty(),
+                    normalizeInt(
+                            VinylHudConfig.getMaxHudSources(),
+                            VinylHudConfig.MIN_HUD_SOURCES,
+                            VinylHudConfig.MAX_HUD_SOURCES
+                    )
+            );
+            updateMessage();
+        }
+
+        @Override
+        protected void updateMessage() {
+            int count = denormalizeInt(
+                    value,
+                    VinylHudConfig.MIN_HUD_SOURCES,
+                    VinylHudConfig.MAX_HUD_SOURCES
+            );
+            setMessage(Component.literal("Tarjetas simultáneas: " + count));
+        }
+
+        @Override
+        protected void applyValue() {
+            VinylHudConfig.setMaxHudSources(
+                    denormalizeInt(
+                            value,
+                            VinylHudConfig.MIN_HUD_SOURCES,
+                            VinylHudConfig.MAX_HUD_SOURCES
+                    )
+            );
+            VinylHudConfig.save();
+        }
+    }
+
     /**
-     * El rango usa una curva cuadrática: da mucha más precisión en distancias
-     * pequeñas (una habitación) sin renunciar a poder llegar muy lejos.
+     * Curva cuadrática: da precisión en una habitación pequeña pero permite
+     * llegar a distancias grandes sin que el slider sea incómodo.
      */
     private static final class SoundDistanceSlider extends AbstractSliderButton {
 
@@ -226,32 +269,25 @@ public final class VinylHudSettingsScreen extends Screen {
                     Component.empty(),
                     normalizeDistance(VinylHudConfig.getSoundDistance())
             );
-
             updateMessage();
         }
 
         @Override
         protected void updateMessage() {
-            float distance = denormalizeDistance(this.value);
-
+            float distance = denormalizeDistance(value);
             setMessage(
                     Component.literal(
-                            "Distancia de audio: "
-                                    + Math.round(distance)
-                                    + " bloques"
+                            "Distancia de audio: " + Math.round(distance) + " bloques"
                     )
             );
         }
 
         @Override
         protected void applyValue() {
-            VinylHudConfig.setSoundDistance(
-                    denormalizeDistance(this.value)
-            );
+            VinylHudConfig.setSoundDistance(denormalizeDistance(value));
             VinylHudConfig.save();
         }
     }
-
 
     private static final class MusicVolumeSlider extends AbstractSliderButton {
 
@@ -268,23 +304,19 @@ public final class VinylHudSettingsScreen extends Screen {
                             VinylHudConfig.MAX_MUSIC_VOLUME
                     )
             );
-
             updateMessage();
         }
 
         @Override
         protected void updateMessage() {
             float volume = denormalize(
-                    this.value,
+                    value,
                     VinylHudConfig.MIN_MUSIC_VOLUME,
                     VinylHudConfig.MAX_MUSIC_VOLUME
             );
-
             setMessage(
                     Component.literal(
-                            "Volumen de música: "
-                                    + Math.round(volume * 100.0F)
-                                    + "%"
+                            "Volumen de música: " + Math.round(volume * 100.0F) + "%"
                     )
             );
         }
@@ -293,7 +325,7 @@ public final class VinylHudSettingsScreen extends Screen {
         protected void applyValue() {
             VinylHudConfig.setMusicVolume(
                     denormalize(
-                            this.value,
+                            value,
                             VinylHudConfig.MIN_MUSIC_VOLUME,
                             VinylHudConfig.MAX_MUSIC_VOLUME
                     )
@@ -311,16 +343,25 @@ public final class VinylHudSettingsScreen extends Screen {
         return (float) (min + (max - min) * clamped);
     }
 
+    private static double normalizeInt(int value, int min, int max) {
+        if (max <= min) {
+            return 0.0D;
+        }
+        return (value - min) / (double) (max - min);
+    }
+
+    private static int denormalizeInt(double value, int min, int max) {
+        double clamped = Math.max(0.0D, Math.min(1.0D, value));
+        return min + (int) Math.round((max - min) * clamped);
+    }
+
     private static double normalizeDistance(float distance) {
         double linear = normalize(
                 distance,
                 VinylHudConfig.MIN_SOUND_DISTANCE,
                 VinylHudConfig.MAX_SOUND_DISTANCE
         );
-
-        return Math.sqrt(
-                Math.max(0.0D, Math.min(1.0D, linear))
-        );
+        return Math.sqrt(Math.max(0.0D, Math.min(1.0D, linear)));
     }
 
     private static float denormalizeDistance(double value) {

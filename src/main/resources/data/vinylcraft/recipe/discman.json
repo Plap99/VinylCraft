@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IRI",
+    "IGI",
+    "LLL"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "R": "minecraft:redstone",
+    "G": "minecraft:glass_pane",
+    "L": "minecraft:leather"
+  },
+  "result": {
+    "id": "vinylcraft:discman",
+    "count": 1
+  }
+}

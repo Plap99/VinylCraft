@@ -1,8 +1,10 @@
 package com.radig.vinylcraft.client.sound;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -514,46 +516,52 @@ public final class VinylPlayerSoundManager {
     }
 
     /**
-     * Devuelve el tocadiscos activo más cercano al jugador para el HUD.
-     * Incluye reproducción normal y PAUSE; STOP desaparece del HUD.
+     * Devuelve todos los tocadiscos activos que están dentro de la distancia
+     * audible configurada, ordenados del más cercano al más lejano.
+     *
+     * LAST_PLAYBACK_TICKS funciona como registro estable de transporte y evita
+     * que una tarjeta desaparezca durante el tick de transición entre pistas.
      */
-    public static VinylPlayerBlockEntity getHudPlayer() {
+    public static List<VinylPlayerBlockEntity> getHudPlayers() {
         Minecraft minecraft = Minecraft.getInstance();
 
-        VinylPlayerBlockEntity best = null;
-        double bestDistance = Double.MAX_VALUE;
+        if (minecraft.player == null) {
+            return List.of();
+        }
 
-        for (VinylPlayerBlockEntity entity : LOCAL_PLAYERS.keySet()) {
+        Set<VinylPlayerBlockEntity> candidates =
+                Collections.newSetFromMap(new IdentityHashMap<>());
+
+        candidates.addAll(LAST_PLAYBACK_TICKS.keySet());
+        candidates.addAll(LOCAL_PLAYERS.keySet());
+        candidates.addAll(ACTIVE_SOUNDS.keySet());
+
+        double maxDistance = VinylHudConfig.getSoundDistance();
+        double maxDistanceSquared = maxDistance * maxDistance;
+
+        List<VinylPlayerBlockEntity> result = new ArrayList<>();
+
+        for (VinylPlayerBlockEntity entity : candidates) {
             double distance = hudDistanceSquared(minecraft, entity);
 
-            if (distance < bestDistance) {
-                bestDistance = distance;
-                best = entity;
+            if (distance <= maxDistanceSquared) {
+                result.add(entity);
             }
         }
 
-        for (VinylPlayerBlockEntity entity : ACTIVE_SOUNDS.keySet()) {
-            double distance = hudDistanceSquared(minecraft, entity);
+        result.sort(
+                java.util.Comparator.comparingDouble(
+                        entity -> hudDistanceSquared(minecraft, entity)
+                )
+        );
 
-            if (distance < bestDistance) {
-                bestDistance = distance;
-                best = entity;
-            }
-        }
+        return result;
+    }
 
-        if (best == null) {
-            return null;
-        }
-
-        if (
-                best.isRemoved()
-                        || !best.hasVinyl()
-                        || best.isStopped()
-        ) {
-            return null;
-        }
-
-        return best;
+    /** Compatibilidad con el HUD anterior: devuelve sólo el más cercano. */
+    public static VinylPlayerBlockEntity getHudPlayer() {
+        List<VinylPlayerBlockEntity> players = getHudPlayers();
+        return players.isEmpty() ? null : players.get(0);
     }
 
     private static double hudDistanceSquared(

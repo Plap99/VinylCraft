@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "vinylcraft_headphones",
+  "pattern": [
+    "W W",
+    "CRC",
+    " W "
+  ],
+  "key": {
+    "W": "minecraft:pink_wool",
+    "C": "minecraft:coal",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "vinylcraft:pink_headphones",
+    "count": 1
+  }
+}

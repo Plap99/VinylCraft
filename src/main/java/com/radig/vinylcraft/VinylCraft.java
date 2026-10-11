@@ -12,6 +12,7 @@ import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
 import com.radig.vinylcraft.component.ModDataComponents;
 import com.radig.vinylcraft.network.VinylRecorderNetworking;
+import com.radig.vinylcraft.network.DiscmanNetworking;
 
 public class VinylCraft implements ModInitializer {
 
@@ -30,6 +31,7 @@ public class VinylCraft implements ModInitializer {
         ModBlockEntities.registerModBlockEntities();
         ModSounds.registerModSounds();
         VinylRecorderNetworking.register();
+        DiscmanNetworking.register();
 
         LOGGER.info("VinylCraft loaded successfully!");
     }

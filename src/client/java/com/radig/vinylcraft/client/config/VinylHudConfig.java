@@ -37,6 +37,27 @@ public final class VinylHudConfig {
         }
     }
 
+    public enum SourceMode {
+        ALL("Todas"),
+        DISCMAN_ONLY("Solo Discman"),
+        PLAYERS_ONLY("Solo reproductores");
+
+        private final String label;
+
+        SourceMode(String label) {
+            this.label = label;
+        }
+
+        public String label() {
+            return label;
+        }
+
+        public SourceMode next() {
+            SourceMode[] values = values();
+            return values[(ordinal() + 1) % values.length];
+        }
+    }
+
     public enum AlphaMode {
         BACKGROUND_ONLY("Solo fondo"),
         WHOLE_HUD("Todo el HUD");
@@ -70,6 +91,9 @@ public final class VinylHudConfig {
     public static final float MIN_MUSIC_VOLUME = 0.0F;
     public static final float MAX_MUSIC_VOLUME = 1.0F;
 
+    public static final int MIN_HUD_SOURCES = 1;
+    public static final int MAX_HUD_SOURCES = 5;
+
     private static final Gson GSON =
             new GsonBuilder()
                     .setPrettyPrinting()
@@ -88,6 +112,8 @@ public final class VinylHudConfig {
     private static AlphaMode alphaMode = AlphaMode.BACKGROUND_ONLY;
     private static float soundDistance = 32.0F;
     private static float musicVolume = 1.0F;
+    private static SourceMode sourceMode = SourceMode.ALL;
+    private static int maxHudSources = 3;
 
     private VinylHudConfig() {
     }
@@ -143,6 +169,22 @@ public final class VinylHudConfig {
                     alphaMode = AlphaMode.BACKGROUND_ONLY;
                 }
             }
+
+            if (data.sourceMode != null) {
+                try {
+                    sourceMode = SourceMode.valueOf(data.sourceMode);
+                } catch (IllegalArgumentException ignored) {
+                    sourceMode = SourceMode.ALL;
+                }
+            }
+
+            if (data.maxHudSources > 0) {
+                maxHudSources = clampInt(
+                        data.maxHudSources,
+                        MIN_HUD_SOURCES,
+                        MAX_HUD_SOURCES
+                );
+            }
         } catch (Exception exception) {
             System.err.println("[VinylCraft] No se pudo cargar hud.json");
             exception.printStackTrace();
@@ -161,6 +203,8 @@ public final class VinylHudConfig {
             data.alphaMode = alphaMode.name();
             data.soundDistance = soundDistance;
             data.musicVolume = musicVolume;
+            data.sourceMode = sourceMode.name();
+            data.maxHudSources = maxHudSources;
 
             try (Writer writer = Files.newBufferedWriter(CONFIG_FILE)) {
                 GSON.toJson(data, writer);
@@ -237,8 +281,33 @@ public final class VinylHudConfig {
         );
     }
 
+
+    public static SourceMode getSourceMode() {
+        return sourceMode;
+    }
+
+    public static void setSourceMode(SourceMode value) {
+        sourceMode = value == null ? SourceMode.ALL : value;
+    }
+
+    public static int getMaxHudSources() {
+        return maxHudSources;
+    }
+
+    public static void setMaxHudSources(int value) {
+        maxHudSources = clampInt(
+                value,
+                MIN_HUD_SOURCES,
+                MAX_HUD_SOURCES
+        );
+    }
+
     public static Path getConfigFile() {
         return CONFIG_FILE;
+    }
+
+    private static int clampInt(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     private static float clamp(float value, float min, float max) {
@@ -257,5 +326,7 @@ public final class VinylHudConfig {
         private String alphaMode = AlphaMode.BACKGROUND_ONLY.name();
         private float soundDistance = 32.0F;
         private float musicVolume = 1.0F;
+        private String sourceMode = SourceMode.ALL.name();
+        private int maxHudSources = 3;
     }
 }

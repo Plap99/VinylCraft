@@ -73,11 +73,13 @@ public final class VinylAlbumCoverEditScreen extends Screen {
         });
 
         int buttonY = height - 30;
-        int buttonWidth = Math.min(130, Math.max(90, panelWidth));
+        int buttonGap = 8;
+        int buttonWidth = Math.max(88, Math.min(120, (panelWidth - buttonGap) / 2));
+        int buttonsX = panelX + Math.max(0, (panelWidth - (buttonWidth * 2 + buttonGap)) / 2);
 
         addRenderableWidget(
                 new RecorderColorButton(
-                        panelX,
+                        buttonsX,
                         buttonY,
                         buttonWidth,
                         20,
@@ -89,7 +91,7 @@ public final class VinylAlbumCoverEditScreen extends Screen {
 
         chooseButton = addRenderableWidget(
                 new RecorderColorButton(
-                        width - margin - buttonWidth,
+                        buttonsX + buttonWidth + buttonGap,
                         buttonY,
                         buttonWidth,
                         20,

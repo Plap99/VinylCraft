@@ -48,6 +48,48 @@ public final class ModDataComponents {
                             .build()
             );
 
+
+
+    public static final DataComponentType<Boolean> DISCMAN_EQUIPPED =
+            Registry.register(
+                    BuiltInRegistries.DATA_COMPONENT_TYPE,
+                    VinylCraft.id("discman_equipped"),
+                    DataComponentType.<Boolean>builder()
+                            .persistent(Codec.BOOL)
+                            .networkSynchronized(ByteBufCodecs.BOOL)
+                            .build()
+            );
+
+    public static final DataComponentType<Integer> DISCMAN_STATE =
+            Registry.register(
+                    BuiltInRegistries.DATA_COMPONENT_TYPE,
+                    VinylCraft.id("discman_state"),
+                    DataComponentType.<Integer>builder()
+                            .persistent(Codec.intRange(0, 2))
+                            .networkSynchronized(ByteBufCodecs.VAR_INT)
+                            .build()
+            );
+
+    public static final DataComponentType<Long> DISCMAN_PLAYBACK_TICKS =
+            Registry.register(
+                    BuiltInRegistries.DATA_COMPONENT_TYPE,
+                    VinylCraft.id("discman_playback_ticks"),
+                    DataComponentType.<Long>builder()
+                            .persistent(Codec.LONG)
+                            .networkSynchronized(ByteBufCodecs.VAR_LONG)
+                            .build()
+            );
+
+    public static final DataComponentType<Integer> DISCMAN_VOLUME =
+            Registry.register(
+                    BuiltInRegistries.DATA_COMPONENT_TYPE,
+                    VinylCraft.id("discman_volume"),
+                    DataComponentType.<Integer>builder()
+                            .persistent(Codec.intRange(0, 100))
+                            .networkSynchronized(ByteBufCodecs.VAR_INT)
+                            .build()
+            );
+
     private ModDataComponents() {
     }
 

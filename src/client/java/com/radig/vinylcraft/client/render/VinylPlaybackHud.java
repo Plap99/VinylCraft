@@ -2,15 +2,12 @@ package com.radig.vinylcraft.client.render;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
-import com.radig.vinylcraft.block.entity.VinylPlayerBlockEntity;
 import com.radig.vinylcraft.client.config.VinylHudConfig;
 import com.radig.vinylcraft.client.library.AlbumCoverResolver;
 import com.radig.vinylcraft.client.library.AlbumCoverTextureManager;
-import com.radig.vinylcraft.client.sound.VinylPlayerSoundManager;
-import com.radig.vinylcraft.item.VinylData;
 import com.radig.vinylcraft.music.AlbumData;
-import com.radig.vinylcraft.music.ModAlbums;
 import com.radig.vinylcraft.music.TrackData;
 
 import net.minecraft.client.Minecraft;
@@ -19,13 +16,16 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
-/** HUD compacto de reproducción de VinylCraft. */
+/** HUD multifuente de reproducción de VinylCraft. */
 public final class VinylPlaybackHud {
 
     private static final int MARGIN = 8;
     private static final int PANEL_WIDTH = 216;
     private static final int PANEL_HEIGHT = 60;
+    private static final int PANEL_GAP = 4;
     private static final int COVER_SIZE = 48;
+    private static final int SOURCE_ICON_SIZE = 9;
+    private static final int FOOTER_HEIGHT = 15;
 
     private VinylPlaybackHud() {
     }
@@ -33,38 +33,49 @@ public final class VinylPlaybackHud {
     public static void extractRenderState(
             GuiGraphicsExtractor graphics) {
 
+        extractRenderStateInternal(
+                graphics,
+                false,
+                false
+        );
+    }
+
+    /**
+     * Versión usada dentro de InventoryScreen. Sólo representa la fuente
+     * Discman y mantiene el comportamiento de mostrar el álbum cargado aun
+     * cuando el transporte está en STOP.
+     */
+    public static void extractDiscmanInventoryRenderState(
+            GuiGraphicsExtractor graphics) {
+
+        extractRenderStateInternal(
+                graphics,
+                true,
+                true
+        );
+    }
+
+    private static void extractRenderStateInternal(
+            GuiGraphicsExtractor graphics,
+            boolean allowScreen,
+            boolean discmanOnly) {
+
         Minecraft minecraft = Minecraft.getInstance();
 
         if (
                 minecraft.player == null
                         || minecraft.level == null
-                        || minecraft.gui.screen() != null
+                        || (!allowScreen && minecraft.gui.screen() != null)
                         || minecraft.gui.hud.isHidden()
                         || !VinylHudConfig.isEnabled()
         ) {
             return;
         }
 
-        VinylPlayerBlockEntity playerEntity =
-                VinylPlayerSoundManager.getHudPlayer();
+        List<PlaybackHudSource> sources =
+                PlaybackHudManager.collectSources(discmanOnly);
 
-        if (playerEntity == null) {
-            return;
-        }
-
-        String albumId = VinylData.getAlbumId(playerEntity.getVinyl());
-        AlbumData album = ModAlbums.get(albumId);
-
-        if (album == null || album.isEmpty()) {
-            return;
-        }
-
-        PlaybackInfo playback = resolvePlayback(
-                album,
-                playerEntity.getPlaybackTicks()
-        );
-
-        if (playback == null || playback.track() == null) {
+        if (sources.isEmpty()) {
             return;
         }
 
@@ -84,16 +95,55 @@ public final class VinylPlaybackHud {
                     (int) Math.floor(graphics.guiHeight() / scale)
             );
 
-            int panelX = switch (VinylHudConfig.getPosition()) {
+            int requestedMax = discmanOnly
+                    ? 1
+                    : VinylHudConfig.getMaxHudSources();
+
+            int maxBySpace = Math.max(
+                    1,
+                    (scaledGuiHeight - (MARGIN * 2) + PANEL_GAP)
+                            / (PANEL_HEIGHT + PANEL_GAP)
+            );
+
+            int visibleCount = Math.min(
+                    sources.size(),
+                    Math.min(requestedMax, maxBySpace)
+            );
+
+            int hiddenCount = Math.max(0, sources.size() - visibleCount);
+
+            /*
+             * Si habrá indicador de fuentes ocultas, reservamos también su
+             * altura para que nunca se salga del borde de la pantalla.
+             */
+            if (!discmanOnly && hiddenCount > 0) {
+                int availableForCards = Math.max(
+                        PANEL_HEIGHT,
+                        scaledGuiHeight
+                                - (MARGIN * 2)
+                                - FOOTER_HEIGHT
+                                - PANEL_GAP
+                );
+
+                int maxCardsWithFooter = Math.max(
+                        1,
+                        (availableForCards + PANEL_GAP)
+                                / (PANEL_HEIGHT + PANEL_GAP)
+                );
+
+                visibleCount = Math.min(visibleCount, maxCardsWithFooter);
+                hiddenCount = Math.max(0, sources.size() - visibleCount);
+            }
+
+            VinylHudConfig.Position position = VinylHudConfig.getPosition();
+            boolean topAnchored =
+                    position == VinylHudConfig.Position.TOP_LEFT
+                            || position == VinylHudConfig.Position.TOP_RIGHT;
+
+            int panelX = switch (position) {
                 case TOP_LEFT, BOTTOM_LEFT -> MARGIN;
                 case TOP_RIGHT, BOTTOM_RIGHT ->
                         scaledGuiWidth - PANEL_WIDTH - MARGIN;
-            };
-
-            int panelY = switch (VinylHudConfig.getPosition()) {
-                case TOP_LEFT, TOP_RIGHT -> MARGIN;
-                case BOTTOM_LEFT, BOTTOM_RIGHT ->
-                        scaledGuiHeight - PANEL_HEIGHT - MARGIN;
             };
 
             int configuredAlpha = Math.round(
@@ -123,100 +173,252 @@ public final class VinylPlaybackHud {
                     ((borderAlpha & 0xFF) << 24)
                             | 0x005C5C5C;
 
-            graphics.fill(
-                    panelX,
-                    panelY,
-                    panelX + PANEL_WIDTH,
-                    panelY + PANEL_HEIGHT,
-                    panelColor
-            );
+            for (int index = 0; index < visibleCount; index++) {
+                int panelY = topAnchored
+                        ? MARGIN + index * (PANEL_HEIGHT + PANEL_GAP)
+                        : scaledGuiHeight
+                                - MARGIN
+                                - PANEL_HEIGHT
+                                - index * (PANEL_HEIGHT + PANEL_GAP);
 
-            graphics.outline(
-                    panelX,
-                    panelY,
-                    PANEL_WIDTH,
-                    PANEL_HEIGHT,
-                    borderColor
-            );
+                renderSourceCard(
+                        graphics,
+                        minecraft,
+                        sources.get(index),
+                        panelX,
+                        panelY,
+                        panelColor,
+                        borderColor,
+                        contentAlpha
+                );
+            }
 
-            int coverX = panelX + 6;
-            int coverY = panelY + 6;
+            if (!discmanOnly && hiddenCount > 0) {
+                int footerY;
 
-            drawCover(
-                    graphics,
-                    album,
-                    coverX,
-                    coverY,
-                    COVER_SIZE,
-                    contentAlpha
-            );
+                if (topAnchored) {
+                    footerY =
+                            MARGIN
+                                    + visibleCount * (PANEL_HEIGHT + PANEL_GAP);
+                } else {
+                    int topMostPanelY =
+                            scaledGuiHeight
+                                    - MARGIN
+                                    - PANEL_HEIGHT
+                                    - (visibleCount - 1)
+                                            * (PANEL_HEIGHT + PANEL_GAP);
 
-            Font font = minecraft.font;
-            int textX = coverX + COVER_SIZE + 8;
-            int textWidth = PANEL_WIDTH - COVER_SIZE - 20;
-            int textY = panelY + 7;
+                    footerY = topMostPanelY - PANEL_GAP - FOOTER_HEIGHT;
+                }
 
-            String title = fit(
-                    font,
-                    safe(playback.track().title(), "Sin título"),
-                    textWidth
-            );
-
-            String artist = fit(
-                    font,
-                    safe(album.artist(), "Artista desconocido"),
-                    textWidth
-            );
-
-            String time =
-                    formatTicks(playback.elapsedInTrackTicks())
-                            + " / "
-                            + formatTicks(playback.trackDurationTicks());
-
-            String trackNumber =
-                    "Pista "
-                            + (playback.trackIndex() + 1)
-                            + " de "
-                            + album.trackCount();
-
-            graphics.text(
-                    font,
-                    title,
-                    textX,
-                    textY,
-                    argb(contentAlpha, 0xFFFFFF),
-                    true
-            );
-
-            graphics.text(
-                    font,
-                    artist,
-                    textX,
-                    textY + 12,
-                    argb(contentAlpha, 0xBBBBBB),
-                    false
-            );
-
-            graphics.text(
-                    font,
-                    time,
-                    textX,
-                    textY + 25,
-                    argb(contentAlpha, 0xFFFFFF),
-                    false
-            );
-
-            graphics.text(
-                    font,
-                    trackNumber,
-                    textX,
-                    textY + 38,
-                    argb(contentAlpha, 0xAAAAAA),
-                    false
-            );
+                renderMoreFooter(
+                        graphics,
+                        minecraft.font,
+                        panelX,
+                        footerY,
+                        hiddenCount,
+                        panelColor,
+                        borderColor,
+                        contentAlpha
+                );
+            }
         } finally {
             graphics.pose().popMatrix();
         }
+    }
+
+    private static void renderSourceCard(
+            GuiGraphicsExtractor graphics,
+            Minecraft minecraft,
+            PlaybackHudSource source,
+            int panelX,
+            int panelY,
+            int panelColor,
+            int borderColor,
+            int contentAlpha) {
+
+        AlbumData album = source.album();
+        PlaybackInfo playback = resolvePlayback(
+                album,
+                source.playbackTicks()
+        );
+
+        if (playback == null || playback.track() == null) {
+            return;
+        }
+
+        graphics.fill(
+                panelX,
+                panelY,
+                panelX + PANEL_WIDTH,
+                panelY + PANEL_HEIGHT,
+                panelColor
+        );
+
+        graphics.outline(
+                panelX,
+                panelY,
+                PANEL_WIDTH,
+                PANEL_HEIGHT,
+                borderColor
+        );
+
+        int coverX = panelX + 6;
+        int coverY = panelY + 6;
+
+        drawCover(
+                graphics,
+                album,
+                coverX,
+                coverY,
+                COVER_SIZE,
+                contentAlpha
+        );
+
+        int sourceIconX =
+                panelX + PANEL_WIDTH - SOURCE_ICON_SIZE - 6;
+        int sourceIconY = panelY + 6;
+
+        drawSourceIcon(
+                graphics,
+                source.type(),
+                sourceIconX,
+                sourceIconY,
+                contentAlpha
+        );
+
+        Font font = minecraft.font;
+        int textX = coverX + COVER_SIZE + 8;
+        int textWidth =
+                PANEL_WIDTH
+                        - COVER_SIZE
+                        - 20
+                        - SOURCE_ICON_SIZE
+                        - 4;
+        int textY = panelY + 7;
+
+        String title = fit(
+                font,
+                safe(playback.track().title(), "Sin título"),
+                textWidth
+        );
+
+        String artist = fit(
+                font,
+                safe(album.artist(), "Artista desconocido"),
+                textWidth
+        );
+
+        String time =
+                formatTicks(playback.elapsedInTrackTicks())
+                        + " / "
+                        + formatTicks(playback.trackDurationTicks());
+
+        String trackNumber =
+                "Pista "
+                        + (playback.trackIndex() + 1)
+                        + " de "
+                        + album.trackCount();
+
+        graphics.text(
+                font,
+                title,
+                textX,
+                textY,
+                argb(contentAlpha, 0xFFFFFF),
+                true
+        );
+
+        graphics.text(
+                font,
+                artist,
+                textX,
+                textY + 12,
+                argb(contentAlpha, 0xBBBBBB),
+                false
+        );
+
+        graphics.text(
+                font,
+                time,
+                textX,
+                textY + 25,
+                argb(contentAlpha, 0xFFFFFF),
+                false
+        );
+
+        graphics.text(
+                font,
+                trackNumber,
+                textX,
+                textY + 38,
+                argb(contentAlpha, 0xAAAAAA),
+                false
+        );
+    }
+
+    private static void renderMoreFooter(
+            GuiGraphicsExtractor graphics,
+            Font font,
+            int x,
+            int y,
+            int hiddenCount,
+            int panelColor,
+            int borderColor,
+            int contentAlpha) {
+
+        graphics.fill(
+                x,
+                y,
+                x + PANEL_WIDTH,
+                y + FOOTER_HEIGHT,
+                panelColor
+        );
+
+        graphics.outline(
+                x,
+                y,
+                PANEL_WIDTH,
+                FOOTER_HEIGHT,
+                borderColor
+        );
+
+        graphics.centeredText(
+                font,
+                "+ " + hiddenCount + " fuentes más",
+                x + PANEL_WIDTH / 2,
+                y + 3,
+                argb(contentAlpha, 0xAAAAAA)
+        );
+    }
+
+    private static void drawSourceIcon(
+            GuiGraphicsExtractor graphics,
+            PlaybackHudSource.SourceType type,
+            int x,
+            int y,
+            int alpha) {
+
+        int color = argb(alpha, 0xB8B8B8);
+        int dark = argb(alpha, 0x686868);
+
+        if (type == PlaybackHudSource.SourceType.DISCMAN) {
+            // Mini audífonos: arco + dos copas.
+            graphics.fill(x + 2, y, x + 7, y + 1, color);
+            graphics.fill(x + 1, y + 1, x + 2, y + 4, color);
+            graphics.fill(x + 7, y + 1, x + 8, y + 4, color);
+            graphics.fill(x, y + 3, x + 2, y + 7, dark);
+            graphics.fill(x + 7, y + 3, x + 9, y + 7, dark);
+            return;
+        }
+
+        // Mini vinilo / tocadiscos.
+        graphics.fill(x + 3, y, x + 6, y + 1, color);
+        graphics.fill(x + 1, y + 1, x + 8, y + 2, color);
+        graphics.fill(x, y + 2, x + 9, y + 7, color);
+        graphics.fill(x + 1, y + 7, x + 8, y + 8, color);
+        graphics.fill(x + 3, y + 8, x + 6, y + 9, color);
+        graphics.fill(x + 4, y + 4, x + 5, y + 5, dark);
     }
 
     private static PlaybackInfo resolvePlayback(
@@ -289,7 +491,6 @@ public final class VinylPlaybackHud {
                     y + size / 2 - 4,
                     argb(alpha, 0x777777)
             );
-
             return;
         }
 
@@ -366,7 +567,6 @@ public final class VinylPlaybackHud {
                     );
 
             return AlbumCoverTextureManager.getTexture(cover);
-
         } catch (Exception ignored) {
             return null;
         }
@@ -387,7 +587,6 @@ public final class VinylPlaybackHud {
 
         String ellipsis = "...";
         int usable = Math.max(8, width - font.width(ellipsis));
-
         return font.plainSubstrByWidth(value, usable) + ellipsis;
     }
 
@@ -404,7 +603,6 @@ public final class VinylPlaybackHud {
         long totalSeconds = Math.max(0L, ticks / 20L);
         long minutes = totalSeconds / 60L;
         long seconds = totalSeconds % 60L;
-
         return String.format("%02d:%02d", minutes, seconds);
     }
 

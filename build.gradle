@@ -31,11 +31,39 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-	implementation "net.jthink:jaudiotagger:3.0.1"
-	implementation "javazoom:jlayer:1.0.1"
-	include "javazoom:jlayer:1.0.1"
-	implementation "org.lwjgl:lwjgl-nfd:3.4.1"
-	runtimeOnly "org.lwjgl:lwjgl-nfd:3.4.1:natives-windows"
+	include(implementation("net.jthink:jaudiotagger:3.0.1"))
+
+	include(implementation("javazoom:jlayer:1.0.1"))
+
+	def lwjglNfdVersion = "3.4.1"
+
+	include(implementation(
+			"org.lwjgl:lwjgl-nfd:${lwjglNfdVersion}"
+	))
+
+	include(runtimeOnly(
+			"org.lwjgl:lwjgl-nfd:${lwjglNfdVersion}:natives-windows"
+	))
+
+	include(runtimeOnly(
+			"org.lwjgl:lwjgl-nfd:${lwjglNfdVersion}:natives-windows-arm64"
+	))
+
+	include(runtimeOnly(
+			"org.lwjgl:lwjgl-nfd:${lwjglNfdVersion}:natives-linux"
+	))
+
+	include(runtimeOnly(
+			"org.lwjgl:lwjgl-nfd:${lwjglNfdVersion}:natives-linux-arm64"
+	))
+
+	include(runtimeOnly(
+			"org.lwjgl:lwjgl-nfd:${lwjglNfdVersion}:natives-macos"
+	))
+
+	include(runtimeOnly(
+			"org.lwjgl:lwjgl-nfd:${lwjglNfdVersion}:natives-macos-arm64"
+	))
 }
 
 processResources {
